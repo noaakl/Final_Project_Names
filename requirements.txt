@@ -9,3 +9,10 @@ python-dateutil==2.8.2
 six==1.16.0
 editdistance==0.6.0
 tqdm==4.62.3
+click==8.0.3
+gTTS==2.2.3
+urllib3==1.26.7
+requests==2.26.0
+certifi==2021.10.8
+idna==3.3
+zipp==3.6.0
