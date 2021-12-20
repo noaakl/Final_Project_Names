@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Similar Name Suggestor</title>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="page-title">
+            <h1>nAIme</h1>
+        </div>
+
+        <div class="search-wraper">
+
+            <p>Suggest synonyms for the name of (your name) ?</p>
+            <div class="search-inner">
+                <input type="text" class="form-contorl" id="nameList" placeholder="Write your name here (i.e. Mike, christina)">
+                <span class="search-btn">
+                    <button id="searchName" action="/dashboard" method="POST">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0ZM17.0977 6.9336C21.3785 6.9336 24.8477 10.4047 24.8477 14.6855C24.8477 18.9664 21.3785 22.4355 17.0977 22.4355C15.8022 22.4355 14.5812 22.1186 13.5078 21.5566C13.5089 21.5616 13.5106 21.5673 13.5117 21.5723L10.0156 25.0664L7.15235 22.2012L10.5234 18.8281C10.529 18.8256 10.5354 18.8247 10.541 18.8223C9.78403 17.6251 9.34571 16.2066 9.34571 14.6855C9.34571 10.4047 12.8168 6.9336 17.0977 6.9336ZM17.0977 10.377C14.7186 10.377 12.7891 12.3065 12.7891 14.6855C12.7891 17.0646 14.7186 18.9922 17.0977 18.9922C19.4767 18.9922 21.4043 17.0646 21.4043 14.6855C21.4043 12.3065 19.4767 10.377 17.0977 10.377Z" fill="#F27054" />
+                        </svg>
+                    </button>
+                </span>
+            </div>
+
+        </div>
+
+        <div class="result-wrapper">
+             <ul id="searchResultList">
+
+
+            </ul>
+        </div>
+    </div>
+
+
+
+
+
+
+{##}
+{##}
+{#<div class="content">#}
+{#    <h1>Suggest Synonyms for the Name of ?</h1>#}
+{##}
+{#    <form action="/dashboard" method="POST">#}
+{#        <label for="selected_name">Choose Name:</label>#}
+{#        <input type="text" name="selected_name" id="selected_name">#}
+{##}
+{#        <input type="submit" value="Search Name">#}
+{#    </form>#}
+{##}
+{#    {% if targeted_name  %}#}
+{#        {% if result | length  == 0 %}#}
+{#        <h4> No similar names found for the underlined name of {{targeted_name}} ! </h4>#}
+{#        {% else%}#}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> SpokenName2Vec : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['spoken_name_2_vec'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                    {% if candidate.exclusive == 1 %}#}
+{#                        <li style="color: green">{{candidate.candidate}}</li>#}
+{#                    {% else %}#}
+{#                        <li>{{candidate.candidate}}</li>#}
+{#                    {% endif %}#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{##}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> Family Trees : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['family_trees'] %}#}
+{##}
+{#                    {% if candidate.exclusive == 1 %}#}
+{#                        <li style="color: green">{{candidate.candidate}}</li>#}
+{#                    {% else %}#}
+{#                        <li>{{candidate.candidate}}</li>#}
+{#                    {% endif %}#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{##}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> Soundex : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['soundex'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{##}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> Metaphone : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['metaphone'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> Double Metaphone : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['double_metaphone'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> NYSIIS : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['nysiis'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#        <div class="search_result" style="width: 320px;padding:20px;float: left;">#}
+{#            <h4> Match Rating Codex : {{targeted_name}} </h4>#}
+{#            <ul>#}
+{#                {% for candidate in result['match_rating_codex'] %}#}
+{#              <li>{{candidate.candidate}}</li>#}
+{#                {% endfor %}#}
+{#            </ul>#}
+{#        </div>#}
+{#        {% endif%}#}
+{#    {% endif%}#}
+{##}
+{#</div>#}
+{% endblock %}

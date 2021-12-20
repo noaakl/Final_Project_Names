@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{#    <title>name</title>#}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/plugin/slick.css') }}"/>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='js/plugin/jquery-ui.css') }}"/>
+    {% block head %}{% endblock %}
+</head>
+{#<body style="background-image: url({{ url_for('static', filename='images/bg.jpg') }});">#}
+<body>
+{% block body %}{% endblock %}
+</body>
+<script src="{{ url_for('static', filename='js/plugin/jquery-3.5.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugin/jquery-ui.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/plugin/slick.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</html>
