@@ -20,7 +20,7 @@ from sklearn.metrics import precision_score, accuracy_score, recall_score, preci
 
 # # Create child-all ancestors graph before suggesting 
 
-# In[11]:
+parental_relation_type = ''
 
 
 def get_child_father_full_path(target_field_name, min_chars_count, max_edit_distance, min_occurance):
@@ -722,8 +722,6 @@ def calculate_recall_at(predictions, source_name_num_of_relevant_synonyms):
     return recall_1, recall_2, recall_3, recall_5, recall_10
 
 
-# In[37]:
-
 
 target_field_names = ["First Name"]
 # target_field_names = ["Last Name Current"]
@@ -755,10 +753,13 @@ parental_relation_types = ['Child_Father']
 #parental_relation_types = ['Child_All_Ancestors']
 # parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather', 'Child_All_Ancestors']
 # max_edit_distances = [2, 3, 4, 5]
-max_edit_distances = [3]
-min_chars_counts = [2]
-# min_occurances = [5]
-min_occurances = [10]
+# max_edit_distances = [3]
+# min_chars_counts = [2]
+# # min_occurances = [5]
+# min_occurances = [10]
+max_edit_distances = [2, 3, 4, 5, 100]
+min_chars_counts = [2, 3]
+min_occurances = [5, 10]
 ranking_functions = ['ED_and_order',
                       'order_2_and_ED', 
                       'min_ED_of_DM', 
@@ -793,9 +794,6 @@ for target_field_name in tqdm(target_field_names):
                         
                         
 print("Done!")
-
-
-# In[ ]:
 
 
 def min_ED_of_DM2(name_graph, original_name):
@@ -845,24 +843,13 @@ def min_ED_of_DM2(name_graph, original_name):
             return candidates_df
         return None
 
-
-# In[ ]:
-
-
 original_name = "Jan"
 
 
 head_candidates_df = min_ED_of_DM2(name_graph, original_name)
-# head_candidates_df
-
-
-# In[ ]:
-
 
 print(head_candidates_df)
 
-
-# In[ ]:
 
 print("Done!!!_")
 

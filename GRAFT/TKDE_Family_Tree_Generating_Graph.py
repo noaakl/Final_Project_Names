@@ -13,6 +13,8 @@ target_field_name = "First Name"
 # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
 output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
 
+start_time = time.time()
+targeted_field_name = ''
 
 # def create_son_grandfather_grandmother_by_field_name():
 #     # target fle should be dump_people_user_full.csv
@@ -675,7 +677,7 @@ def filter_higher_than_n_occurances(sf, n):
 
 
 def main():
-    start_time = time.time()
+
     son_father_mother_grandfather_grandmother_sf = create_child_grandfather_grandmother_by_field_name()
     print("--- %s seconds for creating son_father_mother_grandfather_grandmother ---" % (time.time() - start_time))
 
@@ -735,8 +737,7 @@ def main():
     min_letters_for_name = 2
 
     targeted_field_name = target_field_name.replace(" ", "_")
-    # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
-    output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
+
 
     child_gfather_gmother_stacked_cleaned_ed_sf = tc.SFrame.read_csv(
         output_path + 'wikitree_{0}_child_grandfather_grandmother_ed.csv'.format(targeted_field_name))

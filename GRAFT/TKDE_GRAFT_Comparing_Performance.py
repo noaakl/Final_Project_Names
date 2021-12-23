@@ -37,15 +37,6 @@ def get_full_path_suggestions(target_field_name, parental_relation_type, min_cha
     return full_path
 
 
-# def get_results_full_path(full_path, ranking_function):
-#     full_path_without_extension = full_path.split(".")[0]
-#     updated_path =  full_path_without_extension + "_{0}_suggestions.csv".format(ranking_function)
-#     return updated_path
-
-
-# In[42]:
-
-
 def compare_suggestion(original_name, candidate, ground_truth_df):
     print("original_name: {0}, candidate: {1}".format(original_name, candidate))
     result_df = ground_truth_df[
@@ -55,9 +46,6 @@ def compare_suggestion(original_name, candidate, ground_truth_df):
     if result_df.empty:
         return 0
     return 1
-
-
-# In[43]:
 
 
 def compare_suggestion_with_ground_truth_by_provided_dfs(suggestions_df, ground_truth_df, ranking_function,
@@ -219,9 +207,6 @@ def calculate_recall_at(predictions, source_name_num_of_relevant_synonyms):
     recall_10 = num_of_relevant_retrieved_10 / float(source_name_num_of_relevant_synonyms)
 
     return recall_1, recall_2, recall_3, recall_5, recall_10
-
-
-# In[44]:
 
 
 target_field_names = ["First Name"]

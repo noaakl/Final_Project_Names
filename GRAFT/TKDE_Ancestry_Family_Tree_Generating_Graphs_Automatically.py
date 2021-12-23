@@ -15,6 +15,8 @@ import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
 
+# original_path = "/Users/noaakless/Desktop/final_project/Names_Students_Project/"
+original_path = "/home/user/project_py_3/Family_Trees_TKDE/"
 
 def create_child_father_sframe(wikitree_sf, target_field_name):
     start_time = time.time()
@@ -854,7 +856,6 @@ def create_child_greatgrandfather_sframe(wikitree_sf, target_field_name):
 
     duration = time.time() - start_time
     return son_third_generation_sf, duration
-
 
 # ## Create Sframe for child and ancestors and save them
 
@@ -2594,472 +2595,176 @@ def create_edges_child_greatgrandparents(child_greatgrandfather_ed_filter_chars_
     return child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time
 
 
-def main():
-    # original_path = "/Users/noaakless/Desktop/final_project/Names_Students_Project/"
-    original_path = "/home/user/project_py_3/Family_Trees_TKDE/"
-    # target_field_names = ['Last Name Current']
-    target_field_names = ["First Name"]
+# target_field_names = ['Last Name Current']
+target_field_names = ["First Name"]
 
-    # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/V2/First_Names/"
-    # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/V2/Last_Names/"
-    # output_path = original_path + "Family_Trees_TKDE/Ancestry/Last_Names/"
-    output_path = original_path + "Family_Trees_TKDE/First_Names/"
+# output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/V2/First_Names/"
+# output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/V2/Last_Names/"
+# output_path = original_path + "Family_Trees_TKDE/Ancestry/Last_Names/"
+output_path = original_path + "Family_Trees_TKDE/First_Names/"
 
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
 
-    parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-    # parental_relation_types = ['Child_Father']
-    # parental_relation_types = ['Child_Grandfather', 'Child_GreatGrandfather']
-    max_edit_distances = [2, 3, 4, 5, 100]
-    # min_chars_counts = [2]
-    min_chars_counts = [2, 3]
-    min_occurances = [5, 10]
+# parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
+parental_relation_types = ['Child_Father']
+# parental_relation_types = ['Child_Grandfather', 'Child_GreatGrandfather']
+max_edit_distances = [2, 3, 4, 5, 100]
+# min_chars_counts = [2]
+min_chars_counts = [2, 3]
+min_occurances = [5, 10]
 
-    ancestry_sf = tc.SFrame.read_csv(original_path + 'Family_Trees_TKDE/records_surnames_counts_250k_surnames.tsv',
-                                     delimiter='\t')
-    ancestry_sf['Name'] = ancestry_sf['Name'].apply(lambda x: x.capitalize())
+ancestry_sf = tc.SFrame.read_csv(original_path + 'Family_Trees_TKDE/records_surnames_counts_250k_surnames.tsv',
+                                 delimiter='\t')
+ancestry_sf['Name'] = ancestry_sf['Name'].apply(lambda x: x.capitalize())
 
-    ancestry_df = ancestry_sf.to_dataframe()
+ancestry_df = ancestry_sf.to_dataframe()
 
-    ancestry_names = ancestry_df["Name"].tolist()
-    ancestry_names = sorted(ancestry_names)
+ancestry_names = ancestry_df["Name"].tolist()
+ancestry_names = sorted(ancestry_names)
 
-    prefix_names = ['Van', 'van',
-                    'Der', 'der',
-                    'Del', 'del',
-                    'Da', 'da',
-                    'Mc', 'mc',
-                    'La', 'la',
-                    'Los', 'los',
-                    'De', 'de',
-                    'Don', 'don',
-                    'Von', 'von',
-                    'San', 'san',
-                    'Le', 'le',
-                    'St', 'st',
-                    'Zu', 'zu',
-                    'Und', 'und',
-                    'Den', 'den',
-                    'Du', 'du',
-                    'Di', 'di',
-                    'Dos', 'dos',
-                    'Ha', 'ha']
+prefix_names = ['Van', 'van',
+                'Der', 'der',
+                'Del', 'del',
+                'Da', 'da',
+                'Mc', 'mc',
+                'La', 'la',
+                'Los', 'los',
+                'De', 'de',
+                'Don', 'don',
+                'Von', 'von',
+                'San', 'san',
+                'Le', 'le',
+                'St', 'st',
+                'Zu', 'zu',
+                'Und', 'und',
+                'Den', 'den',
+                'Du', 'du',
+                'Di', 'di',
+                'Dos', 'dos',
+                'Ha', 'ha']
 
-    dataset_path = original_path + 'Family_Trees_TKDE/'
+dataset_path = original_path + 'Family_Trees_TKDE/'
 
-    # target fle should be dump_people_user_full.csv
-    original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
+# target fle should be dump_people_user_full.csv
+original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
 
-    results = []
-    for target_field_name in tqdm(target_field_names):
-        for parental_relation_type in tqdm(parental_relation_types):
-            wikitree_sf = original_wikitree_sf.copy()
+results = []
+for target_field_name in tqdm(target_field_names):
+    for parental_relation_type in tqdm(parental_relation_types):
+        wikitree_sf = original_wikitree_sf.copy()
+        if parental_relation_type == "Child_Father":
+            child_father_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_parents(
+                wikitree_sf, target_field_name, parental_relation_type)
+
+        elif parental_relation_type == "Child_Grandfather":
+            child_grandfather_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_grandparents(
+                wikitree_sf, target_field_name, parental_relation_type)
+
+        elif parental_relation_type == "Child_GreatGrandfather":
+            child_greatgrandfather_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_greatgrandparents(
+                wikitree_sf, target_field_name, parental_relation_type)
+
+        for min_chars_count in min_chars_counts:
             if parental_relation_type == "Child_Father":
-                child_father_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_parents(
-                    wikitree_sf, target_field_name, parental_relation_type)
+                child_father_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_father(
+                    child_father_ed_sf,
+                    target_field_name,
+                    parental_relation_type,
+                    min_chars_count)
+
+                print("filter_chars_time: {0}".format(filter_chars_time))
+
+
 
             elif parental_relation_type == "Child_Grandfather":
-                child_grandfather_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_grandparents(
-                    wikitree_sf, target_field_name, parental_relation_type)
+                child_grandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_grandfather(
+                    child_grandfather_ed_sf,
+                    target_field_name,
+                    parental_relation_type,
+                    min_chars_count)
+
+                print("filter_chars_time: {0}".format(filter_chars_time))
+
 
             elif parental_relation_type == "Child_GreatGrandfather":
-                child_greatgrandfather_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_greatgrandparents(
-                    wikitree_sf, target_field_name, parental_relation_type)
+                child_greatgrandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_greatgrandfather(
+                    child_greatgrandfather_ed_sf,
+                    target_field_name,
+                    parental_relation_type,
+                    min_chars_count)
 
-            for min_chars_count in min_chars_counts:
+                print("filter_chars_time: {0}".format(filter_chars_time))
+
+            for max_edit_distance in tqdm(max_edit_distances):
+
                 if parental_relation_type == "Child_Father":
-                    child_father_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_father(
-                        child_father_ed_sf,
-                        target_field_name,
-                        parental_relation_type,
-                        min_chars_count)
-
-                    print("filter_chars_time: {0}".format(filter_chars_time))
-
-
+                    child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_parents(
+                        child_father_ed_filter_chars_sf, target_field_name, parental_relation_type, min_chars_count,
+                        max_edit_distance)
 
                 elif parental_relation_type == "Child_Grandfather":
-                    child_grandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_grandfather(
-                        child_grandfather_ed_sf,
-                        target_field_name,
-                        parental_relation_type,
-                        min_chars_count)
-
-                    print("filter_chars_time: {0}".format(filter_chars_time))
-
+                    child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_grandparents(
+                        child_grandfather_ed_filter_chars_sf, target_field_name, parental_relation_type,
+                        min_chars_count, max_edit_distance)
+                    print(child_ancestors_count_united_sf)
 
                 elif parental_relation_type == "Child_GreatGrandfather":
-                    child_greatgrandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_greatgrandfather(
-                        child_greatgrandfather_ed_sf,
+
+                    child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_greatgrandparents(
+                        child_greatgrandfather_ed_filter_chars_sf, target_field_name, parental_relation_type,
+                        min_chars_count, max_edit_distance)
+
+                for min_occurance in tqdm(min_occurances):
+                    filter_by_occurances_sf, filter_occur_time = filter_by_occurances(
+                        child_ancestors_count_united_sf,
+                        min_occurance,
                         target_field_name,
                         parental_relation_type,
-                        min_chars_count)
+                        min_chars_count,
+                        max_edit_distance)
 
-                    print("filter_chars_time: {0}".format(filter_chars_time))
+                    print("filter_occur_time: {0}".format(filter_occur_time))
 
-                for max_edit_distance in tqdm(max_edit_distances):
+                    node_count, edge_count, avg_in_degree, avg_out_degree = create_graph(filter_by_occurances_sf)
 
-                    if parental_relation_type == "Child_Father":
-                        child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_parents(
-                            child_father_ed_filter_chars_sf, target_field_name, parental_relation_type, min_chars_count,
+                    result = (target_field_name, parental_relation_type, min_chars_count, min_occurance,
+                              max_edit_distance, sframe_time, stacked_time, no_prefix_time,
+                              ed_time, filter_chars_time, filter_by_ed_time, group_by_time,
+                              unite_time, node_count, edge_count, avg_in_degree, avg_out_degree)
+                    results.append(result)
+
+results_df = pd.DataFrame(results,
+                          columns=['target_field_name', 'parental_relation_type', 'min_chars_count',
+                                   'min_occurance',
+                                   'max_edit_distance', 'sframe_time', 'stacked_time', 'no_prefix_time', 'ed_time',
+                                   'filter_chars_time', 'filter_by_ed_time', 'group_by_time', 'unite_time',
+                                   'node_count', 'edge_count', 'avg_in_degree', 'avg_out_degree'])
+print(results_df)
+now = datetime.now()
+
+date_time = now.strftime("%d/%m/%Y_%H:%M:%S")
+date_time = date_time.replace(':', '_')
+date_time = date_time.replace('/', '_')
+results_df.to_csv(output_path + "Generating_Graphs_Time_Performance_{0}.csv".format(date_time), index=False)
+
+print("Done!")
+
+x, y = filter_by_occurances(child_ancestors_count_united_sf, min_occurance,
+                            target_field_name,
+                            parental_relation_type,
+                            min_chars_count,
                             max_edit_distance)
 
-                    elif parental_relation_type == "Child_Grandfather":
-                        child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_grandparents(
-                            child_grandfather_ed_filter_chars_sf, target_field_name, parental_relation_type,
-                            min_chars_count, max_edit_distance)
-                        print(child_ancestors_count_united_sf)
+tc.SFrame(
+    '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/short_wt_First_Name_Child_GreatGrandfather_stacked.csv')
 
-                    elif parental_relation_type == "Child_GreatGrandfather":
+print("start reading the file")
+sf_x = tc.SFrame(
+    '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/First_Names/Child_Father/geq_2_chars/wt_First_Name_Child_Father_stacked_no_prefix_ed_geq_2_chars.csv')
+sf_x_2 = sf_x.sort(['Edit_Distance_Child_Mother'], ascending=False)
 
-                        child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_greatgrandparents(
-                            child_greatgrandfather_ed_filter_chars_sf, target_field_name, parental_relation_type,
-                            min_chars_count, max_edit_distance)
+print("finish reading the file")
+print("Done!!")
 
-                    for min_occurance in tqdm(min_occurances):
-                        filter_by_occurances_sf, filter_occur_time = filter_by_occurances(child_ancestors_count_united_sf,
-                                                                                          min_occurance,
-                                                                                          target_field_name,
-                                                                                          parental_relation_type,
-                                                                                          min_chars_count,
-                                                                                          max_edit_distance)
 
-                        print("filter_occur_time: {0}".format(filter_occur_time))
-
-                        node_count, edge_count, avg_in_degree, avg_out_degree = create_graph(filter_by_occurances_sf)
-
-                        result = (target_field_name, parental_relation_type, min_chars_count, min_occurance,
-                                  max_edit_distance, sframe_time, stacked_time, no_prefix_time,
-                                  ed_time, filter_chars_time, filter_by_ed_time, group_by_time,
-                                  unite_time, node_count, edge_count, avg_in_degree, avg_out_degree)
-                        results.append(result)
-
-    results_df = pd.DataFrame(results,
-                              columns=['target_field_name', 'parental_relation_type', 'min_chars_count', 'min_occurance',
-                                       'max_edit_distance', 'sframe_time', 'stacked_time', 'no_prefix_time', 'ed_time',
-                                       'filter_chars_time', 'filter_by_ed_time', 'group_by_time', 'unite_time',
-                                       'node_count', 'edge_count', 'avg_in_degree', 'avg_out_degree'])
-    print(results_df)
-    now = datetime.now()
-
-    date_time = now.strftime("%d/%m/%Y_%H:%M:%S")
-    date_time = date_time.replace(':', '_')
-    date_time = date_time.replace('/', '_')
-    results_df.to_csv(output_path + "Generating_Graphs_Time_Performance_{0}.csv".format(date_time), index=False)
-
-    print("Done!")
-
-    # In[ ]:
-
-
-    x, y = filter_by_occurances(child_ancestors_count_united_sf, min_occurance,
-                                target_field_name,
-                                parental_relation_type,
-                                min_chars_count,
-                                max_edit_distance)
-
-    # In[ ]:
-
-
-    x
-
-    # In[ ]:
-
-
-    child_ancestors_count_united_sf
-
-    # In[ ]:
-
-
-    # target_field_names = ["First Name", 'Last_Name_Current']
-    # # target_field_names = ["First Name"]
-    # # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
-
-    # # parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-    # # max_edit_distances = [2, 3, 4, 5]
-    # # min_chars_counts = [2, 3]
-    # # min_occurances = [1, 5, 10]
-
-    # target_field_names = ["First Name"]
-    # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
-
-    # if not os.path.exists(output_path):
-    #     os.makedirs(output_path)
-
-
-    # #parental_relation_types = ['Child_Father']
-    # parental_relation_types = ['Child_Grandfather']
-    # max_edit_distances = [2]
-    # min_chars_counts = [2]
-    # min_occurances = [1]
-
-
-    # prefix_names = ['Van', 'van', 'Der', 'der', 'Del', 'del', 'Da', 'da', 'Mc', 'mc' 'La', 'la', 'Los', 'los', 'De', 'de'
-    #                 'Don', 'don', 'Von', 'von', 'San', 'san', 'Le', 'le']
-
-    # dataset_path = '/home/aviade/Names_Project/Family_Trees_TKDE/'
-
-    # # target fle should be dump_people_user_full.csv
-    # wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
-
-    # results = []
-    # for target_field_name in tqdm(target_field_names):
-    #     for parental_relation_type in tqdm(parental_relation_types):
-    #         if parental_relation_type == "Child_Father":
-
-    #             child_father_ed_sf, sframe_time, stacked_time, no_prefix_time, ed_time = preprocess_child_parents(wikitree_sf, target_field_name, parental_relation_type)
-
-    #             child_father_sf,  sframe_time = create_child_father_sframe_and_save(wikitree_sf,
-    #                                                                                 target_field_name,
-    #                                                                                 parental_relation_type)
-    #             print("sframe_time: {0}".format(sframe_time))
-
-    #             shorten_child_father_sf = shorten_child_father_sframe_and_save(child_father_sf,
-    #                                                                                 target_field_name,
-    #                                                                                 parental_relation_type)
-
-    #             child_father_stacked_sf,  stacked_time = stack_child_father_and_save(shorten_child_father_sf,
-    #                                                                                      target_field_name,
-    #                                                                                      parental_relation_type)
-    #             print("stacked_time: {0}".format(stacked_time))
-
-
-    #             child_father_no_prefix_sf,  no_prefix_time = clean_prefix_names_child_father(child_father_stacked_sf,
-    #                                                                                          target_field_name,
-    #                                                                                          parental_relation_type,
-    #                                                                                          prefix_names)
-
-    #             print("no_prefix_time: {0}".format(no_prefix_time))
-
-    #             child_father_ed_sf, ed_time = calculate_child_father_ed(child_father_no_prefix_sf,
-    #                                                            target_field_name,
-    #                                                            parental_relation_type)
-
-    #             print("ed_time: {0}".format(ed_time))
-
-
-    #         elif parental_relation_type == "Child_Grandfather":
-    #             child_grandfather_sf,  sframe_time = create_child_grandfather_sframe_and_save(wikitree_sf,
-    #                                                                                              target_field_name,
-    #                                                                                              parental_relation_type)
-
-    #             print("sframe_time: {0}".format(sframe_time))
-
-
-    #             shorten_child_greatgrandfather_sf = shorten_child_grandfather_sframe_and_save(child_grandfather_sf,
-    #                                                                                                target_field_name,
-    #                                                                                                parental_relation_type)
-
-
-    #             child_grandfather_stacked_sf,  stacked_time = stack_child_grandfather_and_save(shorten_child_greatgrandfather_sf,
-    #                                                                                      target_field_name,
-    #                                                                                      parental_relation_type)
-
-    #             print("stacked_time: {0}".format(stacked_time))
-
-    #             child_grandfather_no_prefix_sf,  no_prefix_time = clean_prefix_names_child_grandfather(child_grandfather_stacked_sf,
-    #                                                                                                       target_field_name,
-    #                                                                                                       parental_relation_type,
-    #                                                                                                   prefix_names)
-
-    #             print("no_prefix_time: {0}".format(no_prefix_time))
-
-    #             child_grandfather_ed_sf, ed_time = calculate_child_grandfather_ed(child_grandfather_no_prefix_sf,
-    #                                                            target_field_name,
-    #                                                            parental_relation_type)
-
-    #             print("ed_time: {0}".format(ed_time))
-
-
-    #         elif parental_relation_type == "Child_GreatGrandfather":
-
-    #             child_greatgrandfather_sf, sframe_time = create_child_greatgrandfather_sframe_and_save(wikitree_sf,
-    #                                                                                  target_field_name,
-    #                                                                                  parental_relation_type)
-
-    #             print("sframe_time: {0}".format(sframe_time))
-
-    #             shorten_child_greatgrandfather_sf = shorten_child_greatgrandfather_sframe_and_save(child_greatgrandfather_sf,
-    #                                                                                                target_field_name,
-    #                                                                                                parental_relation_type)
-
-
-    #             child_greatgrandfather_stacked_sf,  stacked_time = stack_child_grandfather_and_save(shorten_child_greatgrandfather_sf,
-    #                                                                                      target_field_name,
-    #                                                                                      parental_relation_type)
-
-    #             print("stacked_time: {0}".format(stacked_time))
-
-
-    #             child_greatgrandfather_no_prefix_sf, no_prefix_time = clean_prefix_names_child_greatgrandfather(child_greatgrandfather_stacked_sf,
-    #                                                                                                       target_field_name,
-    #                                                                                                       parental_relation_type,
-    #                                                                                                             prefix_names)
-
-    #             print("no_prefix_time: {0}".format(no_prefix_time))
-
-
-    #             child_greatgrandfather_ed_sf, ed_time = calculate_child_greatgrandfather_ed(child_greatgrandfather_no_prefix_sf,
-    #                                                            target_field_name,
-    #                                                            parental_relation_type)
-
-    #             print("ed_time: {0}".format(ed_time))
-
-
-    #         for min_chars_count in min_chars_counts:
-    #             if parental_relation_type == "Child_Father":
-    #                 child_father_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_father(child_father_ed_sf,
-    #                                                              target_field_name,
-    #                                                              parental_relation_type,
-    #                                                              min_chars_count)
-
-    #                 print("filter_chars_time: {0}".format(filter_chars_time))
-
-
-    #             elif parental_relation_type == "Child_Grandfather":
-    #                 child_grandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_grandfather(child_grandfather_ed_sf,
-    #                                                              target_field_name,
-    #                                                              parental_relation_type,
-    #                                                              min_chars_count)
-
-    #                 print("filter_chars_time: {0}".format(filter_chars_time))
-
-
-    #             elif parental_relation_type == "Child_GreatGrandfather":
-    #                 child_greatgrandfather_ed_filter_chars_sf, filter_chars_time = filter_higher_n_chars_child_greatgrandfather(child_greatgrandfather_ed_sf,
-    #                                                              target_field_name,
-    #                                                              parental_relation_type,
-    #                                                              min_chars_count)
-
-    #                 print("filter_chars_time: {0}".format(filter_chars_time))
-
-    #             for max_edit_distance in tqdm(max_edit_distances):
-
-
-    #                  if parental_relation_type == "Child_Father":
-    #                         child_father_ed_sf, child_mother_ed_sf, filter_by_ed_time = filter_by_ed_child_father(child_father_ed_filter_chars_sf,
-    #                                                                  target_field_name,
-    #                                                                  parental_relation_type,
-    #                                                                  min_chars_count,
-    #                                                                  max_edit_distance)
-
-    #                         print("filter_by_ed_time: {0}".format(filter_by_ed_time))
-
-
-    #                         child_father_groupby_sf, child_mother_groupby_sf, group_by_time = group_by_child_father(child_father_ed_sf,
-    #                                                                                        child_mother_ed_sf,
-    #                                                                                        target_field_name,
-    #                                                                                        parental_relation_type,
-    #                                                                                        min_chars_count,
-    #                                                                                        max_edit_distance)
-
-    #                         print("group_by_time: {0}".format(group_by_time))
-
-    #                         child_ancestors_count_united_sf, unite_time = unite_child_parents(child_father_groupby_sf,
-    #                                                                                           child_mother_groupby_sf,
-    #                                                                                           target_field_name,
-    #                                                                                           parental_relation_type,
-    #                                                                                           min_chars_count,
-    #                                                                                           max_edit_distance)
-
-    #                         print("unite_time: {0}".format(unite_time))
-
-
-    #                  elif parental_relation_type == "Child_Grandfather":
-    #                     child_grandfather_father_ed_sf, child_grandmother_father_ed_sf, child_grandfather_mother_ed_sf, child_grandmother_mother_ed_sf,  filter_by_ed_time = filter_by_ed_child_grandfather(child_grandfather_ed_filter_chars_sf,
-    #                     target_field_name, parental_relation_type,min_chars_count,max_edit_distance)
-
-
-    #                     child_grandfather_father_groupby_sf, child_grandmother_father_groupby_sf, child_grandfather_mother_groupby_sf, child_grandmother_mother_groupby_sf, group_by_time = group_by_child_grandfather(child_grandfather_father_ed_sf,
-    #                     child_grandmother_father_ed_sf, child_grandfather_mother_ed_sf, child_grandmother_mother_ed_sf, target_field_name, parental_relation_type, min_chars_count, max_edit_distance)
-
-
-    #                     child_ancestors_count_united_sf, unite_time = unite_child_grandparents(child_grandfather_father_groupby_sf,
-    #                                                                                            child_grandmother_father_groupby_sf,
-    #                                                                                            child_grandfather_mother_groupby_sf,
-    #                                                                                            child_grandmother_mother_groupby_sf,
-    #                                                                                            target_field_name,
-    #                                                                                            parental_relation_type,
-    #                                                                                            min_chars_count,
-    #                                                                                            max_edit_distance)
-    #                  elif parental_relation_type == "Child_GreatGrandfather":
-    #                     child_greatgrandfather_grandfather_father_ed_sf, child_greatgrandmother_grandfather_father_ed_sf, child_greatgrandfather_grandmother_father_ed_sf, child_greatgrandmother_grandmother_father_ed_sf, child_greatgrandfather_grandfather_mother_ed_sf, child_greatgrandmother_grandfather_mother_ed_sf, child_greatgrandfather_grandmother_mother_ed_sf, child_greatgrandmother_grandmother_mother_ed_sf, filter_by_ed_time = filter_by_ed_child_greatgrandfather(child_greatgrandfather_ed_filter_chars_sf,
-    #                     target_field_name, parental_relation_type, min_chars_count, max_edit_distance)
-
-    #                     print("filter_by_ed_time: {0}".format(filter_by_ed_time))
-
-    #                     child_greatgrandfather_grandfather_father_groupby_sf, child_greatgrandmother_grandfather_father_groupby_sf,child_greatgrandfather_grandmother_father_ed_sf, child_greatgrandmother_grandmother_father_ed_sf,child_greatgrandfather_grandfather_mother_ed_sf,child_greatgrandmother_grandfather_mother_ed_sf, child_greatgrandfather_grandmother_mother_ed_sf,child_greatgrandmother_grandmother_mother_ed_sf, group_by_time = group_by_child_greatgrandfather(child_greatgrandfather_grandfather_father_ed_sf,
-    #                     child_greatgrandmother_grandfather_father_ed_sf,
-    #                     child_greatgrandfather_grandmother_father_ed_sf,
-    #                     child_greatgrandmother_grandmother_father_ed_sf,
-    #                     child_greatgrandfather_grandfather_mother_ed_sf,
-    #                     child_greatgrandmother_grandfather_mother_ed_sf,
-    #                     child_greatgrandfather_grandmother_mother_ed_sf,
-    #                     child_greatgrandmother_grandmother_mother_ed_sf,
-    #                     target_field_name, parental_relation_type,
-    #                     min_chars_count, max_edit_distance)
-
-    #                     print("group_by_time: {0}".format(group_by_time))
-
-    #                     child_ancestors_count_united_sf, unite_time = unite_child_greatgrandparents(child_greatgrandfather_grandfather_father_sf,
-    #                                   child_greatgrandmother_grandfather_father_sf,
-    #                                   child_greatgrandfather_grandmother_father_sf,
-    #                                   child_greatgrandmother_grandmother_father_sf,
-    #                                   child_greatgrandfather_grandfather_mother_sf,
-    #                                   child_greatgrandmother_grandfather_mother_sf,
-    #                                   child_greatgrandfather_grandmother_mother_sf,
-    #                                   child_greatgrandmother_grandmother_mother_sf,
-    #                                   target_field_name, parental_relation_type, min_chars_count, max_edit_distance)
-
-    #                     print("unite_time: {0}".format(unite_time))
-
-
-    #                 for min_occurance in tqdm(min_occurances):
-    #                     filter_by_occurances, filter_occur_time = filter_by_occurances(sf, n, target_field_name, parental_relation_type, min_chars_count, max_edit_distance)
-
-    #                     print("filter_occur_time: {0}".format(filter_occur_time))
-
-    #                     node_count, edge_count, avg_in_degree, avg_out_degree = create_graph(filter_by_occurances)
-
-
-    #                     result = (target_field_name, parental_relation_type, min_chars_count, max_edit_distance,
-    #                              sframe_time, stacked_time, no_prefix_time, ed_time, filter_chars_time, filter_by_ed_time,
-    #                              group_by_time, unite_time, node_count, edge_count, avg_in_degree, avg_out_degree)
-    #                     print(result)
-    #                     results.append(result)
-    #                     print(results)
-
-    # results_df = pd.DataFrame(results, columns=['target_field_name', 'parental_relation_type', 'min_chars_count', 'max_edit_distance',
-    #                                  'sframe_time', 'stacked_time', 'no_prefix_time', 'ed_time', 'filter_chars_time',
-    #                                'filter_by_ed_time','group_by_time, unite_time', 'node_count', 'edge_count',
-    #                                            'avg_in_degree', 'avg_out_degree'])
-    # print(results_df)
-    # results_df.to_csv(output_path + "Generating_Graphs_Time_Performance.csv", index=False)
-
-
-    # In[ ]:
-
-
-    # In[ ]:
-
-
-    tc.SFrame(
-        '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/short_wt_First_Name_Child_GreatGrandfather_stacked.csv')
-
-    # In[ ]:
-
-    print("start reading the file")
-    sf_x = tc.SFrame(
-        '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/First_Names/Child_Father/geq_2_chars/wt_First_Name_Child_Father_stacked_no_prefix_ed_geq_2_chars.csv')
-    sf_x_2 = sf_x.sort(['Edit_Distance_Child_Mother'], ascending=False)
-    sf_x_2
-    print("finish reading the file")
-
-    # In[ ]:
-
-
-    print("Done!!")
-
-
-main()
