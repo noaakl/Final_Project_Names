@@ -13,7 +13,7 @@ target_field_name = "First Name"
 # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
 output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
 
-start_time = time.time()
+# start_time = time.time()
 targeted_field_name = ''
 
 # def create_son_grandfather_grandmother_by_field_name():
@@ -677,7 +677,7 @@ def filter_higher_than_n_occurances(sf, n):
 
 
 def main():
-
+    start_time = time.time()
     son_father_mother_grandfather_grandmother_sf = create_child_grandfather_grandmother_by_field_name()
     print("--- %s seconds for creating son_father_mother_grandfather_grandmother ---" % (time.time() - start_time))
 
@@ -720,7 +720,6 @@ def main():
     child_gfather_gmother_stacked_cleaned_sf.export_csv(
         output_path + "wikitree_{0}_child_grandfather_grandmother_stacked_clean_prefixes.csv".format(
             targeted_field_name))
-    child_gfather_gmother_stacked_cleaned_sf
 
     start_time = time.time()
     child_gfather_gmother_stacked_cleaned_ed_sf = calculate_measures(child_gfather_gmother_stacked_cleaned_sf)
@@ -815,7 +814,6 @@ def main():
         out_path + "child_grandfather_count_higher_{0}_letters_united_ED_{1}_{2}.csv".format(min_letters_for_name,
                                                                                              min_edit_distance,
                                                                                              max_edit_distance))
-    child_ancestors_count_united_sf
 
     higher_min_occurances = 10
 
