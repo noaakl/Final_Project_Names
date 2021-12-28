@@ -13,8 +13,6 @@ target_field_name = "First Name"
 # output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/"
 output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
 
-# start_time = time.time()
-targeted_field_name = ''
 
 # def create_son_grandfather_grandmother_by_field_name():
 #     # target fle should be dump_people_user_full.csv
@@ -108,7 +106,8 @@ def create_child_grandfather_grandmother_by_field_name():
     # wikitree_sf = tc.SFrame.read_csv('/home/aviade/Names_Project/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
     # wikitree_sf = tc.SFrame.read_csv('/Users/noaakless/Desktop/final_project/Names_Students_Project/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
     wikitree_sf = tc.SFrame.read_csv(
-        '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
+        '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/short_dump_people_users_100k.csv', delimiter='\t')
+    # '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
 
     wikitree_sf = wikitree_sf[(wikitree_sf[target_field_name] != None) &
                               (wikitree_sf[target_field_name] != '') &
@@ -287,6 +286,23 @@ def create_child_grandfather_grandmother_by_field_name():
     return son_second_generation_sf
 
 
+start_time = time.time()
+son_father_mother_grandfather_grandmother_sf = create_child_grandfather_grandmother_by_field_name()
+print("--- %s seconds for creating son_father_mother_grandfather_grandmother ---" % (time.time() - start_time))
+
+targeted_field_name = target_field_name.replace(" ", "_")
+son_father_mother_grandfather_grandmother_sf.export_csv(
+    output_path + "wikitree_{0}_child_grandfather_grandmother.csv".format(targeted_field_name))
+
+short_son_father_mother_grandfather_grandmother_sf = son_father_mother_grandfather_grandmother_sf[
+    target_field_name, 'Father ' + target_field_name, 'Mother ' + target_field_name,
+    'Grandfather father ' + target_field_name, 'Grandmother father ' + target_field_name,
+    'Grandfather mother ' + target_field_name, 'Grandmother mother ' + target_field_name]
+
+short_son_father_mother_grandfather_grandmother_sf.export_csv(
+    output_path + "short_wikitree_{0}_child_grandfather_grandmother.csv".format(targeted_field_name))
+
+
 # # Stack records
 def clean_content(name):
     regex = re.compile('[^a-zA-Z]')
@@ -349,6 +365,25 @@ def clean_slack_names(wikitree_sf):
     return wikitree_sf
 
 
+start_time = time.time()
+son_father_mother_grandfather_grandmother_stacked_sf = clean_slack_names(
+    short_son_father_mother_grandfather_grandmother_sf)
+print("--- %s seconds for stacked ---" % (time.time() - start_time))
+son_father_mother_grandfather_grandmother_stacked_sf.export_csv(
+    output_path + "wikitree_{0}_child_grandfather_grandmother_stacked.csv".format(targeted_field_name))
+
+targeted_field_name = target_field_name.replace(" ", "_")
+short_son_father_mother_grandfather_grandmother_stacked_sf = son_father_mother_grandfather_grandmother_stacked_sf[
+    "Child_" + targeted_field_name, 'Grandfather_father_' + targeted_field_name, 'Grandmother_father_' + targeted_field_name,
+    'Grandfather_mother_' + targeted_field_name, 'Grandmother_mother_' + targeted_field_name]
+
+short_son_father_mother_grandfather_grandmother_stacked_sf.export_csv(
+    output_path + "short_wikitree_{0}_child_grandfather_grandmother_stacked.csv".format(targeted_field_name))
+
+print("Done!")
+
+
+# # Clean unnessary names
 def clean_prefix_names(sf):
     prefix_names = ['Van', 'van', 'Der', 'der', 'Del', 'del', 'Da', 'da', 'Mc', 'mc' 'La', 'la', 'Los', 'los',
                     'Don', 'don', 'Von', 'von', 'San', 'san']
@@ -361,33 +396,18 @@ def clean_prefix_names(sf):
     sf = sf.filter_by(prefix_names, 'Grandfather_mother_' + targeted_field_name, exclude=True)
     sf = sf.filter_by(prefix_names, 'Grandmother_mother_' + targeted_field_name, exclude=True)
 
-    #     # clear None names
-    #     sf = sf.dropna()
-    #     sf = sf[(sf['Child_' + targeted_field_name] != "") &
-    #            (sf['Grandfather_father_' + targeted_field_name] != "") &
-    #            (sf['Grandmother_father_' + targeted_field_name] != "") &
-    #            (sf['Grandfather_mother_' + targeted_field_name] != "") &
-    #            (sf['Grandmother_mother_' + targeted_field_name] != "")]
-
-    #     sf['Child_' + targeted_field_name] = sf[~sf['Child_' + targeted_field_name].isin(prefix_names)]
-    #     sf['Grandfather_father_' + targeted_field_name] = sf[~sf['Grandfather_father_' + targeted_field_name].isin(prefix_names)]
-    #     sf['Grandmother_father_' + targeted_field_name] = sf[~sf['Grandmother_father_' + targeted_field_name].isin(prefix_names)]
-    #     sf['Grandfather_mother_' + targeted_field_name] = sf[~sf['Grandfather_mother_' + targeted_field_name].isin(prefix_names)]
-    #     sf['Grandmother_mother_' + targeted_field_name] = sf[~sf['Grandmother_mother_' + targeted_field_name].isin(prefix_names)]
-
-    #     sf['Child_' + targeted_field_name] = sf['Child_' + targeted_field_name].apply(lambda x: x not in list(prefix_names))
-
-    #     sf["Grandfather_father_" + targeted_field_name] = sf["Grandfather_father_" + targeted_field_name].apply(lambda x: x not in list(prefix_names))
-
-    #     sf["Grandmother_father_" + targeted_field_name] = sf["Grandmother_father_" + targeted_field_name].apply(lambda x: x not in list(prefix_names))
-
-    #     sf["Grandfather_mother_" + targeted_field_name] = sf["Grandfather_mother_" + targeted_field_name].apply(lambda x: x not in list(prefix_names))
-
-    #     sf["Grandmother_mother_" + targeted_field_name] = sf["Grandmother_mother_" + targeted_field_name].apply(lambda x: x not in list(prefix_names))
-
     sf.materialize()
-
     return sf
+
+
+targeted_field_name = target_field_name.replace(" ", "_")
+start_time = time.time()
+child_gfather_gmother_stacked_cleaned_sf = clean_prefix_names(
+    short_son_father_mother_grandfather_grandmother_stacked_sf)
+print("--- %s seconds for cleaning prefix names ---" % (time.time() - start_time))
+child_gfather_gmother_stacked_cleaned_sf.export_csv(
+    output_path + "wikitree_{0}_child_grandfather_grandmother_stacked_clean_prefixes.csv".format(
+        targeted_field_name))
 
 
 # # Calculate Edit distance between child and ancestors
@@ -431,78 +451,15 @@ def calculate_measures(wikitree_sf):
     return wikitree_sf
 
 
-# # SELECT only edit distance in selected ranges and len(names)> 2
-# def choose_edit_distance_min_to_max_three_characters_and_above(wikitree_sf, min_edit_distance, max_edit_distance):
-#     output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/higher_three_letters/Child_Grandfather/"
-#     #wikitree_sf = tc.SFrame.read_csv(original_path + 'wikitree_first_name_grandfather_grandson_clean_and_measures.csv')
+start_time = time.time()
+child_gfather_gmother_stacked_cleaned_ed_sf = calculate_measures(child_gfather_gmother_stacked_cleaned_sf)
+print("--- %s seconds for calculating_edit_distance ---" % (time.time() - start_time))
 
-#     targeted_field_name = target_field_name.replace(" ", "_")
+targeted_field_name = target_field_name.replace(" ", "_")
+child_gfather_gmother_stacked_cleaned_ed_sf.export_csv(
+    output_path + 'wikitree_{0}_child_grandfather_grandmother_ed.csv'.format(targeted_field_name))
+print("Done!")
 
-#     wikitree_sf['Child_{0}_Num_Chars'.format(targeted_field_name)] = wikitree_sf.apply(
-#         lambda x: get_num_of_characters(x["Child_" + targeted_field_name]))
-
-#     wikitree_sf['Grandfather_father_{0}_Num_Chars'.format(targeted_field_name)] = wikitree_sf.apply(
-#         lambda x: get_num_of_characters(x["Grandfather_father_" + targeted_field_name]))
-
-#     wikitree_sf['Grandmother_father_{0}_Num_Chars'.format(targeted_field_name)] = wikitree_sf.apply(
-#         lambda x: get_num_of_characters(x["Grandmother_father_" + targeted_field_name]))
-
-#     wikitree_sf['Grandfather_mother_{0}_Num_Chars'.format(targeted_field_name)] = wikitree_sf.apply(
-#         lambda x: get_num_of_characters(x["Grandfather_mother_" + targeted_field_name]))
-
-#     wikitree_sf['Grandmother_mother_{0}_Num_Chars'.format(targeted_field_name)] = wikitree_sf.apply(
-#         lambda x: get_num_of_characters(x["Grandmother_mother_" + targeted_field_name]))
-
-#     #wikitree_sf.materialize()
-
-#     wikitree_sf = wikitree_sf[(wikitree_sf['Child_{0}_Num_Chars'.format(targeted_field_name)] > 2) &
-#                               (wikitree_sf['Grandfather_father_{0}_Num_Chars'.format(targeted_field_name)] > 2) &
-#                               (wikitree_sf['Grandmother_father_{0}_Num_Chars'.format(targeted_field_name)] > 2) &
-#                               (wikitree_sf['Grandfather_mother_{0}_Num_Chars'.format(targeted_field_name)] > 2) &
-#                               (wikitree_sf['Grandmother_mother_{0}_Num_Chars'.format(targeted_field_name)] > 2)
-#                              ]
-
-
-#     child_grandfather_father_edit_distance_sf = wikitree_sf[
-#         ((wikitree_sf['Edit_Distance_Child_Grandfather_father'] >= min_edit_distance) &
-#          (wikitree_sf['Edit_Distance_Child_Grandfather_father'] <= max_edit_distance))]
-
-#     child_grandmother_father_edit_distance_sf = wikitree_sf[
-#         ((wikitree_sf['Edit_Distance_Child_Grandmother_father'] >= min_edit_distance) &
-#          (wikitree_sf['Edit_Distance_Child_Grandmother_father'] <= max_edit_distance))]
-
-#     child_grandfather_mother_edit_distance_sf = wikitree_sf[
-#         ((wikitree_sf['Edit_Distance_Child_Grandfather_mother'] >= min_edit_distance) &
-#          (wikitree_sf['Edit_Distance_Child_Grandfather_mother'] <= max_edit_distance))]
-
-#     child_grandmother_mother_edit_distance_sf = wikitree_sf[
-#         ((wikitree_sf['Edit_Distance_Child_Grandmother_mother'] >= min_edit_distance) &
-#          (wikitree_sf['Edit_Distance_Child_Grandmother_mother'] <= max_edit_distance))]
-
-#     return child_grandfather_father_edit_distance_sf, child_grandmother_father_edit_distance_sf, child_grandfather_mother_edit_distance_sf, child_grandmother_mother_edit_distance_sf
-
-# import time
-# import turicreate as tc
-
-# min_edit_distance = 1
-# max_edit_distance = 3
-
-# start_time = time.time()
-# child_grandfather_father_edit_distance_sf, child_grandmother_father_edit_distance_sf, /
-# child_grandfather_mother_edit_distance_sf, child_grandmother_mother_edit_distance_sf = choose_edit_distance_min_to_max_three_characters_and_above(son_grandfather_grandmother_stacked_measure_sf,
-#                                                                                                                                                   min_edit_distance,
-#                                                                                                                                                   max_edit_distance)
-# print("--- %s seconds filtering between min and max edit distance ---" % (time.time() - start_time))
-
-# output_path = "/home/aviade/Names_Project/Family_Trees_TKDE/First_Names/higher_three_letters/Child_Grandfather/ED_{0}_{1}/".format(min_edit_distance, max_edit_distance)
-
-# child_grandfather_father_edit_distance_sf.export_csv(output_path + "child_grandfather_father_ED_{0}_{1}.csv".format(min_edit_distance, max_edit_distance))
-# child_grandmother_father_edit_distance_sf.export_csv(output_path + "child_grandmother_father_ED_{0}_{1}.csv".format(min_edit_distance, max_edit_distance))
-# child_grandfather_mother_edit_distance_sf.export_csv(output_path + "child_grandfather_mother_ED_{0}_{1}.csv".format(min_edit_distance, max_edit_distance))
-# child_grandmother_mother_edit_distance_sf.export_csv(output_path + "child_grandmother_mother_ED_{0}_{1}.csv".format(min_edit_distance, max_edit_distance))
-
-
-# # SELECT only edit distance in selected ranges no limitation on names length
 
 def get_num_of_characters(x):
     if x is None:
@@ -574,6 +531,49 @@ def choose_ed_min_to_max_limit_characters(wikitree_sf, min_edit_distance, max_ed
     return child_grandfather_father_ed_sf, child_grandmother_father_ed_sf, child_grandfather_mother_ed_sf, child_grandmother_mother_ed_sf
 
 
+min_edit_distance = 1
+max_edit_distance = 3
+# it means tak all names higher than X
+min_letters_for_name = 2
+
+targeted_field_name = target_field_name.replace(" ", "_")
+
+child_gfather_gmother_stacked_cleaned_ed_sf = tc.SFrame.read_csv(
+    output_path + 'wikitree_{0}_child_grandfather_grandmother_ed.csv'.format(targeted_field_name))
+
+start_time = time.time()
+child_grandfather_father_ed_sf, child_grandmother_father_ed_sf, child_grandfather_mother_ed_sf, child_grandmother_mother_ed_sf = choose_ed_min_to_max_limit_characters(
+    child_gfather_gmother_stacked_cleaned_ed_sf, min_edit_distance, max_edit_distance, min_letters_for_name)
+
+print("--- %s seconds filtering between min and max edit distance ---" % (time.time() - start_time))
+
+out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance)
+print(out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                     min_edit_distance,
+                                                                                     max_edit_distance))
+
+child_grandfather_father_ed_sf.export_csv(
+    out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance))
+child_grandmother_father_ed_sf.export_csv(
+    out_path + "child_grandmother_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance))
+child_grandfather_mother_ed_sf.export_csv(
+    out_path + "child_grandfather_mother_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance))
+child_grandmother_mother_ed_sf.export_csv(
+    out_path + "child_grandmother_mother_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance))
+
+
+# # Group by Ancestors
+
 def group_by_child_and_ancestors(child_grandfather_father_ed_sf,
                                  child_grandmother_father_ed_sf,
                                  child_grandfather_mother_ed_sf,
@@ -623,6 +623,35 @@ def group_by_child_and_ancestors(child_grandfather_father_ed_sf,
 
     return child_grandfather_father_sf, child_grandmother_father_sf, child_grandfather_mother_sf, child_grandmother_mother_sf
 
+start_time = time.time()
+child_grandfather_father_sf, child_grandmother_father_sf, child_grandfather_mother_sf, child_grandmother_mother_sf = group_by_child_and_ancestors(
+    child_grandfather_father_ed_sf,
+    child_grandmother_father_ed_sf,
+    child_grandfather_mother_ed_sf,
+    child_grandmother_mother_ed_sf)
+print("--- %s seconds counting occurances by Group by ---" % (time.time() - start_time))
+
+out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance)
+
+child_grandfather_father_sf.export_csv(
+    out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
+                                                                                         min_edit_distance,
+                                                                                         max_edit_distance))
+child_grandmother_father_sf.export_csv(
+    out_path + "child_grandmother_father_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
+                                                                                         min_edit_distance,
+                                                                                         max_edit_distance))
+child_grandfather_mother_sf.export_csv(
+    out_path + "child_grandfather_mother_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
+                                                                                         min_edit_distance,
+                                                                                         max_edit_distance))
+child_grandmother_mother_sf.export_csv(
+    out_path + "child_grandmother_mother_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
+                                                                                         min_edit_distance,
+                                                                                         max_edit_distance))
+
 
 # # Renaming columns, appending results, summing all
 def unite_all_child_ancestors(child_grandfather_father_sf, child_grandmother_father_sf,
@@ -669,6 +698,22 @@ def unite_all_child_ancestors(child_grandfather_father_sf, child_grandmother_fat
     return child_ancestors_count_united_sf
 
 
+start_time = time.time()
+child_ancestors_count_united_sf = unite_all_child_ancestors(child_grandfather_father_sf,
+                                                            child_grandmother_father_sf,
+                                                            child_grandfather_mother_sf,
+                                                            child_grandmother_mother_sf)
+print("--- %s seconds uniting all child and ancestors occurances ---" % (time.time() - start_time))
+
+out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance)
+
+child_ancestors_count_united_sf.export_csv(
+    out_path + "child_grandfather_count_higher_{0}_letters_united_ED_{1}_{2}.csv".format(min_letters_for_name,
+                                                                                         min_edit_distance,
+                                                                                         max_edit_distance))
+
 # # Filter 10 occurances and above
 def filter_higher_than_n_occurances(sf, n):
     filtered_sf = sf[sf["sum"] >= n]
@@ -676,186 +721,41 @@ def filter_higher_than_n_occurances(sf, n):
     return filtered_sf
 
 
-def main():
-    start_time = time.time()
-    son_father_mother_grandfather_grandmother_sf = create_child_grandfather_grandmother_by_field_name()
-    print("--- %s seconds for creating son_father_mother_grandfather_grandmother ---" % (time.time() - start_time))
+higher_min_occurances = 10
 
-    targeted_field_name = target_field_name.replace(" ", "_")
-    son_father_mother_grandfather_grandmother_sf.export_csv(
-        output_path + "wikitree_{0}_child_grandfather_grandmother.csv".format(targeted_field_name))
+start_time = time.time()
+filtered_child_ancestors_count_united_sf = filter_higher_than_n_occurances(child_ancestors_count_united_sf,
+                                                                           higher_min_occurances)
+print("--- %s seconds removing occurances ---" % (time.time() - start_time))
 
-    short_son_father_mother_grandfather_grandmother_sf = son_father_mother_grandfather_grandmother_sf[
-        target_field_name, 'Father ' + target_field_name, 'Mother ' + target_field_name,
-        'Grandfather father ' + target_field_name, 'Grandmother father ' + target_field_name,
-        'Grandfather mother ' + target_field_name, 'Grandmother mother ' + target_field_name]
+out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
+                                                                                   min_edit_distance,
+                                                                                   max_edit_distance)
+filtered_child_ancestors_count_united_sf.export_csv(
+    out_path + "child_grandfather_count_higher_{0}_letters_united_ED_{1}_{2}_min_occur_{3}.csv.csv".format(
+        min_letters_for_name,
+        min_edit_distance,
+        max_edit_distance,
+        higher_min_occurances))
 
-    short_son_father_mother_grandfather_grandmother_sf.export_csv(
-        output_path + "short_wikitree_{0}_child_grandfather_grandmother.csv".format(targeted_field_name))
+g = nx.DiGraph()  # Creating Undirected Graph
+# # adding all nodes and vertices at once
+g.add_weighted_edges_from(
+    [(r['Ancestor_Name'], r['Child_Name'], r['sum']) for r in filtered_child_ancestors_count_united_sf])
+print(nx.info(g))
 
-    start_time = time.time()
-    son_father_mother_grandfather_grandmother_stacked_sf = clean_slack_names(
-        short_son_father_mother_grandfather_grandmother_sf)
-    print("--- %s seconds for stacked ---" % (time.time() - start_time))
-    son_father_mother_grandfather_grandmother_stacked_sf.export_csv(
-        output_path + "wikitree_{0}_child_grandfather_grandmother_stacked.csv".format(targeted_field_name))
+nx.draw(g)
 
-    targeted_field_name = target_field_name.replace(" ", "_")
-    short_son_father_mother_grandfather_grandmother_stacked_sf = son_father_mother_grandfather_grandmother_stacked_sf[
-        "Child_" + targeted_field_name, 'Grandfather_father_' + targeted_field_name, 'Grandmother_father_' + targeted_field_name,
-        'Grandfather_mother_' + targeted_field_name, 'Grandmother_mother_' + targeted_field_name]
+name_closeness_centrality_score_dict = nx.closeness_centrality(g)
 
-    short_son_father_mother_grandfather_grandmother_stacked_sf.export_csv(
-        output_path + "short_wikitree_{0}_child_grandfather_grandmother_stacked.csv".format(targeted_field_name))
+df = pd.DataFrame({"name": list(name_closeness_centrality_score_dict.keys()),
+                   "closeness_centrality": list(name_closeness_centrality_score_dict.values())})
 
-    print("Done!")
-    # # Clean unnessary names
+top_200 = df.sort_values("closeness_centrality", ascending=False).head(200)
 
-    targeted_field_name = target_field_name.replace(" ", "_")
+sub_graph = g.subgraph(top_200["name"])
 
-    start_time = time.time()
-    child_gfather_gmother_stacked_cleaned_sf = clean_prefix_names(
-        short_son_father_mother_grandfather_grandmother_stacked_sf)
-    print("--- %s seconds for cleaning prefix names ---" % (time.time() - start_time))
-    child_gfather_gmother_stacked_cleaned_sf.export_csv(
-        output_path + "wikitree_{0}_child_grandfather_grandmother_stacked_clean_prefixes.csv".format(
-            targeted_field_name))
+nx.draw(sub_graph, nodelist=list(top_200["name"]), node_size=[v * 10000 for v in list(top_200["closeness_centrality"])],
+        with_labels=True)
 
-    start_time = time.time()
-    child_gfather_gmother_stacked_cleaned_ed_sf = calculate_measures(child_gfather_gmother_stacked_cleaned_sf)
-    print("--- %s seconds for calculating_edit_distance ---" % (time.time() - start_time))
-
-    targeted_field_name = target_field_name.replace(" ", "_")
-    child_gfather_gmother_stacked_cleaned_ed_sf.export_csv(
-        output_path + 'wikitree_{0}_child_grandfather_grandmother_ed.csv'.format(targeted_field_name))
-    print("Done!")
-
-    min_edit_distance = 1
-    max_edit_distance = 3
-    # it means tak all names higher than X
-    min_letters_for_name = 2
-
-    targeted_field_name = target_field_name.replace(" ", "_")
-
-
-    child_gfather_gmother_stacked_cleaned_ed_sf = tc.SFrame.read_csv(
-        output_path + 'wikitree_{0}_child_grandfather_grandmother_ed.csv'.format(targeted_field_name))
-
-    start_time = time.time()
-    child_grandfather_father_ed_sf, child_grandmother_father_ed_sf, child_grandfather_mother_ed_sf, child_grandmother_mother_ed_sf = choose_ed_min_to_max_limit_characters(
-        child_gfather_gmother_stacked_cleaned_ed_sf, min_edit_distance, max_edit_distance, min_letters_for_name)
-
-    print("--- %s seconds filtering between min and max edit distance ---" % (time.time() - start_time))
-
-    out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance)
-    print(out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                         min_edit_distance,
-                                                                                         max_edit_distance))
-
-    child_grandfather_father_ed_sf.export_csv(
-        out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance))
-    child_grandmother_father_ed_sf.export_csv(
-        out_path + "child_grandmother_father_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance))
-    child_grandfather_mother_ed_sf.export_csv(
-        out_path + "child_grandfather_mother_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance))
-    child_grandmother_mother_ed_sf.export_csv(
-        out_path + "child_grandmother_mother_higher_{0}_letters_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance))
-
-    start_time = time.time()
-    child_grandfather_father_sf, child_grandmother_father_sf, child_grandfather_mother_sf, child_grandmother_mother_sf = group_by_child_and_ancestors(
-        child_grandfather_father_ed_sf,
-        child_grandmother_father_ed_sf,
-        child_grandfather_mother_ed_sf,
-        child_grandmother_mother_ed_sf)
-    print("--- %s seconds counting occurances by Group by ---" % (time.time() - start_time))
-
-    out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance)
-
-    child_grandfather_father_sf.export_csv(
-        out_path + "child_grandfather_father_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
-                                                                                             min_edit_distance,
-                                                                                             max_edit_distance))
-    child_grandmother_father_sf.export_csv(
-        out_path + "child_grandmother_father_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
-                                                                                             min_edit_distance,
-                                                                                             max_edit_distance))
-    child_grandfather_mother_sf.export_csv(
-        out_path + "child_grandfather_mother_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
-                                                                                             min_edit_distance,
-                                                                                             max_edit_distance))
-    child_grandmother_mother_sf.export_csv(
-        out_path + "child_grandmother_mother_higher_{0}_letters_ED_{1}_{2}_count.csv".format(min_letters_for_name,
-                                                                                             min_edit_distance,
-                                                                                             max_edit_distance))
-    start_time = time.time()
-    child_ancestors_count_united_sf = unite_all_child_ancestors(child_grandfather_father_sf,
-                                                                child_grandmother_father_sf,
-                                                                child_grandfather_mother_sf,
-                                                                child_grandmother_mother_sf)
-    print("--- %s seconds uniting all child and ancestors occurances ---" % (time.time() - start_time))
-
-    out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance)
-
-    child_ancestors_count_united_sf.export_csv(
-        out_path + "child_grandfather_count_higher_{0}_letters_united_ED_{1}_{2}.csv".format(min_letters_for_name,
-                                                                                             min_edit_distance,
-                                                                                             max_edit_distance))
-
-    higher_min_occurances = 10
-
-    start_time = time.time()
-    filtered_child_ancestors_count_united_sf = filter_higher_than_n_occurances(child_ancestors_count_united_sf,
-                                                                               higher_min_occurances)
-    print("--- %s seconds removing occurances ---" % (time.time() - start_time))
-
-    out_path = output_path + "higher_{0}_letters/Child_Grandfather/ED_{1}_{2}/".format(min_letters_for_name,
-                                                                                       min_edit_distance,
-                                                                                       max_edit_distance)
-    filtered_child_ancestors_count_united_sf.export_csv(
-        out_path + "child_grandfather_count_higher_{0}_letters_united_ED_{1}_{2}_min_occur_{3}.csv.csv".format(
-            min_letters_for_name,
-            min_edit_distance,
-            max_edit_distance,
-            higher_min_occurances))
-
-    g = nx.DiGraph()  # Creating Undirected Graph
-    # # adding all nodes and vertices at once
-    g.add_weighted_edges_from(
-        [(r['Ancestor_Name'], r['Child_Name'], r['sum']) for r in filtered_child_ancestors_count_united_sf])
-    print(nx.info(g))
-
-    nx.draw(g)
-
-    name_closeness_centrality_score_dict = nx.closeness_centrality(g)
-
-    df = pd.DataFrame({"name": list(name_closeness_centrality_score_dict.keys()),
-                       "closeness_centrality": list(name_closeness_centrality_score_dict.values())})
-
-    top_200 = df.sort_values("closeness_centrality", ascending=False).head(200)
-
-    sub_graph = g.subgraph(top_200["name"])
-
-    nx.draw(sub_graph, nodelist=list(top_200["name"]),
-            node_size=[v * 10000 for v in list(top_200["closeness_centrality"])],
-            with_labels=True)
-
-    print("Done")
-
-
-main()
-
-
+print("Done!!!")

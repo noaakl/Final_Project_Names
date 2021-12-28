@@ -2669,8 +2669,8 @@ prefix_names = ['Van', 'van',
 dataset_path = original_path + 'Family_Trees_TKDE/Family_Trees_TKDE/'
 
 # target fle should be dump_people_user_full.csv
-original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
-# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'short_dump_people_users_100k.csv')
+# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
+original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'short_dump_people_users_100k.csv')
 # short_sf = original_wikitree_sf.head(n=100000)
 # short_sf.export_csv(dataset_path + "short_dump_people_users_100k.csv")
 print("exported dump_people_users_100k")
