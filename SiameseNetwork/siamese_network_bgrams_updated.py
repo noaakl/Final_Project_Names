@@ -53,6 +53,7 @@ import time
 import itertools
 from csv import writer
 import string
+import pickle
 
 # import chars2vec
 # split reference https://towardsdatascience.com/from-words-to-vectors-e24f0977193e
@@ -77,6 +78,7 @@ dev = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 
 def main_activation():
+    start_time = time.time()
     # paths parameters
     # short_file_path = 'drive/MyDrive/Siamese Network Names/Datasets/'
     # long_file_path = 'drive/MyDrive/Siamese Network Names/Datasets/Phonetic_Encoding_Suggestions/'
@@ -85,14 +87,15 @@ def main_activation():
 
     # Parameter combinations for the network train ('configs')
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
-    version2_dataset = [False]  # [True,False] # true -> 2 versions , false -> new datasets only
-    epochs = [10]  # [50,60,70,80,90,100,120]
-    vector_split_type = ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
-    name_letter_split = [2]  # [1,2,3] fix for not 2
-    result_decision_distance = [3, 4, 5, 6, 7, 8]
+    competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
+    epochs = [10, 50, 100]  # [50,60,70,80,90,100,120]
+    vector_split_type = ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
+    name_letter_split = [1, 2, 3]  # [1,2,3] bgrams
+    result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
     datasets = ["knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv"]
+    gram_frequencies = {}
     config = [epochs, vector_split_type, name_letter_split, result_decision_distance,
-              datasets, train_batch_size, version2_dataset]
+              datasets, train_batch_size, competitor_dataset]
     for config_tuple in list(itertools.product(*config)):
         # activate all functions
         # dev = activate_GPU()
@@ -103,34 +106,58 @@ def main_activation():
         result_decision_distance = config_tuple[3]
         datasets = config_tuple[4]
         train_batch_size = config_tuple[5]
-        version2_dataset = config_tuple[6]
+        competitor_dataset = config_tuple[6]
 
         filtered_df = filter_names(short_file_path, datasets)  # filter names and save df to file
-        # first phase train
-        methods_df = first_phase_negative_examples(long_file_path, version2_dataset)
+        # first phase train examples
+        methods_df = first_phase_negative_examples(long_file_path, competitor_dataset)
         train_df = create_train_df(methods_df, filtered_df)
         train_data, test_data = train_test_split(train_df)
         train_data = add_random_negatives(train_df, train_data)  # add random easy negatives
-        print("done1")
-        # second phase train
+        print("done phase1")
+        # second phase train examples
         unique_df = second_phase_negative_examples(short_file_path, datasets, filtered_df)
         trios = add_random_negatives_phase_two(unique_df)
         train_data, test_data = train_test_split_phase_two(train_data, test_data, trios)
-        print("done2")
+        print("done phase2")
 
-        train_data_vectors = create_data_vectors(train_data, vector_split_type, name_letter_split)
+        # create and train the net
+        train_data_vectors, embedded_dim = create_data_vectors(train_data, vector_split_type, name_letter_split,
+                                                               gram_frequencies)
         train_dataloader = create_siamese_dataset(train_data_vectors, train_batch_size)
-        net = train_network(train_dataloader, epochs, embedded_dim)
+        net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim)
         print("done_train")
-        df_test = prepare_test_data(test_data)
-        test_data_vectors = create_data_vectors(test_data, vector_split_type, name_letter_split)
-        results = calculate_test_distances(test_data_vectors, train_batch_size, net, df_test)
+        df_train = prepare_data(train_data)
+        # df_train -- anch, pos, label| anch, neg, dist
+        train_results, train_size = calculate_distances(train_data_vectors, train_batch_size, net, df_train)
+        # df_train -- anch, pos, label, dist | anch, neg, label, dist
+        df_train, train_accuracy, train_precision, train_recall, train_majority_same = calculate_accuracy(df_train,
+                                                                                                          train_results,
+                                                                                                          result_decision_distance)
+        # df_train -- anch, pos, label, dist, actual, net_pred | anch, neg, label, dist, actual, net_pred
+        print("Train Dataframe: ", df_train)
+        train_scores = [train_size, train_accuracy, train_precision, train_recall, train_majority_same,
+                        1 - train_majority_same]
+        df_test = prepare_data(test_data)
+        test_data_vectors, embedded_dim = create_data_vectors(test_data, vector_split_type, name_letter_split,
+                                                              gram_frequencies)
+        save_gram_frequencies_dict(gram_frequencies)
+        test_results, test_size = calculate_distances(test_data_vectors, train_batch_size, net, df_test)
         print("done_test")
-        df_test, accuracy, precision, recall, majority_same = calculate_accuracy(df_test, results,
-                                                                                 result_decision_distance)
+        df_test, test_accuracy, test_precision, test_recall, test_majority_same = calculate_accuracy(df_test,
+                                                                                                     test_results,
+                                                                                                     result_decision_distance)
+        test_scores = [test_size, test_accuracy, test_precision, test_recall, test_majority_same,
+                       1 - test_majority_same]
         show_false_data_results(df_test)
         save_model_and_results(df_test, net, config_tuple)
-        add_config_to_csv(config_tuple, accuracy, precision, recall, majority_same)
+        time_took = time.time() - start_time
+        add_config_to_csv(config_tuple, train_scores, test_scores, last_epochs_avg, time_took)
+
+
+def save_gram_frequencies_dict(gram_frequencies):
+    with open('gram_frequencies_dictionary.pkl', 'wb') as f:
+        pickle.dump(gram_frequencies, f)
 
 
 def filter_rows_by_values(df, col, values):
@@ -189,7 +216,7 @@ Phase to add Negative Examples from competitors
 '''
 
 
-def first_phase_negative_examples(long_file_path, version2):
+def first_phase_negative_examples(long_file_path, competitor_dataset):
     """
     The method reads the competitor csv files and creates a df of the names the
     algorithm did not agree with 'Behind The Name' as negative examples
@@ -199,7 +226,7 @@ def first_phase_negative_examples(long_file_path, version2):
     # Candidate_x -> competitors' incorrect suggestion for name in 'Original' (synonym 0)
     # Candidate_y -> our correct suggestion for name in 'Original'
 
-    if version2:  # the 2 datasets
+    if not competitor_dataset:  # the 2 datasets
         # Suggestion of the competitors
         dm_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Double_Metaphone_with_gt.csv')
         mrc_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Matching_Rating_Codex_with_gt.csv')
@@ -234,7 +261,7 @@ def first_phase_negative_examples(long_file_path, version2):
     metaphone_df['Method'] = 'Metaphone'
     nysiis_df['Method'] = 'Nysiis'
     soundex_df['Method'] = 'Soundex'
-    if not version2:
+    if competitor_dataset:
         # Concat the datasets
         dfs = [dm_df, mrc_df, metaphone_df, nysiis_df, soundex_df]
     else:
@@ -447,9 +474,19 @@ We have two ways to represent the vectors:
 """
 
 
+def calculate_gram_frequency(dict, name_split):
+    for gram in name_split:
+        if gram in dict:
+            dict[gram] += 1
+        else:
+            dict[gram] = 1
+
+
 # Convert names to sparse
-def word2sparse(name, name_letter_split):
+def word2sparse(name, name_letter_split, gram_frequencies_dict):
     name = name.lower()
+    name_split = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
+    calculate_gram_frequency(gram_frequencies_dict, name_split)
     name = [26] + [ord(c) - ord('a') for c in name] + [27]
     name = [name[i:i + name_letter_split] for i in range(len(name) - 1)]
     nameidx = torch.tensor([[0, pair[0] * 28 + pair[1]] for pair in name])
@@ -492,10 +529,10 @@ def word_ngrams(name, number_of_grams):
     alph_dict, vector_size = create_grams_dict(number_of_grams)
     name = name.lower()
     # first num is grams second num is grams-1 for split
-    name_split = [name[i:i+number_of_grams] for i in range(len(name)-(number_of_grams-1))]
-    name_vec = torch.tensor([[0,alph_dict[chars]] for chars in name_split])
+    name_split = [name[i:i + number_of_grams] for i in range(len(name) - (number_of_grams - 1))]
+    name_vec = torch.tensor([[0, alph_dict[chars]] for chars in name_split])
     values = torch.zeros(len(name_vec))
-    s = torch.sparse_coo_tensor(name_vec.t(), values, (1,vector_size))
+    s = torch.sparse_coo_tensor(name_vec.t(), values, (1, vector_size))
     return s, vector_size
 
 
@@ -518,15 +555,15 @@ def name2vec_addition(name, name_letter_split):
     return sum_pair
 
 
-def create_data_vectors(data, split_method, name_letter_split):
+def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict):
     data_vectors = []
     dim = 28 ** 2
 
     if split_method == 'Sparse':
         for triplet in data:
-            data_vectors += [[word2sparse(triplet[0], name_letter_split)[0].to(dev),
-                              word2sparse(triplet[1], name_letter_split)[0].to(dev),
-                              word2sparse(triplet[2], name_letter_split)[0].to(dev)]]
+            data_vectors += [[word2sparse(triplet[0], name_letter_split, gram_frequencies_dict)[0].to(dev),
+                              word2sparse(triplet[1], name_letter_split, gram_frequencies_dict)[0].to(dev),
+                              word2sparse(triplet[2], name_letter_split, gram_frequencies_dict)[0].to(dev)]]
     # elif split_method == 'name2vec':
     #     for triplet in data:
     #         data_vectors += [[name2vec(triplet[0], name_letter_split).to(dev),
@@ -544,7 +581,7 @@ def create_data_vectors(data, split_method, name_letter_split):
             data_vectors += [[word2dense(triplet[0], name_letter_split)[0].to(dev),
                               word2dense(triplet[1], name_letter_split)[0].to(dev),
                               word2dense(triplet[2], name_letter_split)[0].to(dev)]]
-    return data_vectors , dim
+    return data_vectors, dim
 
 
 """## **Siamese Network**
@@ -587,7 +624,7 @@ def create_siamese_dataset(train_data_vectors, train_batch_size):
 class SiameseNetwork(nn.Module):
     def __init__(self, embed_dim):
         super(SiameseNetwork, self).__init__()
-        self._lw1 = torch.nn.parameter.Parameter(torch.randn(784, 512))
+        self._lw1 = torch.nn.parameter.Parameter(torch.randn(embed_dim, 512))  # embed_dim -> 784
         self._l1 = nn.Linear(embed_dim, 512)
         self._relu = nn.ReLU(inplace=True)
         self._l2 = nn.Linear(512, 128)
@@ -623,7 +660,7 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
     """
     Train the network and calculate loss
     """
-    net = SiameseNetwork(embedded_dim).to(dev) # embedded_dim = 28 ** 2
+    net = SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
     # if you get "expected double" eror while trying to train the model, add:
     # net = net.double()
     criterion = nn.TripletMarginLoss(margin=0.5)
@@ -669,16 +706,16 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
     #####
     net.eval()
     show_plot(counter, loss_history)
-    return net
+    return net, last_epochs_avg
 
 
-def prepare_test_data(test_data):  # Creating DataFrame from the test-data
+def prepare_data(data):  # Creating DataFrame from the test-data
     anch = []
     candidate = []
     labels = []
     # create 2 rows out of each tuple row in the data -->
     # anchor, candidate_pos, positive | anchor, candidate_neg, negative
-    for row in test_data:  # .itertuples():
+    for row in data:  # .itertuples():
         # row1
         anch += [row[0]]
         candidate += [row[1]]
@@ -688,19 +725,19 @@ def prepare_test_data(test_data):  # Creating DataFrame from the test-data
         labels += ['Negative']
         candidate += [row[2]]
     data = {'Original': anch, 'Candidate': candidate, 'Type': labels}
-    df_test = pd.DataFrame(data)
-    return df_test
+    df = pd.DataFrame(data)
+    return df
 
 
-def calculate_test_distances(test_data_vectors, train_batch_size, net, df_test):
+def calculate_distances(test_data_vectors, train_batch_size, net, df):
     siamese_dataset = SiameseNetworkDataset(test_data_vectors)
 
     results = []
-    test_dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=train_batch_size, shuffle=False)
-    dataiter = iter(test_dataloader)
+    dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=train_batch_size, shuffle=False)
+    data_iter = iter(dataloader)
     dist = []
-    for i in range(len(test_dataloader)):
-        x0, x1, label2 = next(dataiter)
+    for i in range(len(dataloader)):
+        x0, x1, label2 = next(data_iter)
         x0, x1, label2 = torch.as_tensor(x0).to(dev), torch.as_tensor(x1).to(dev), torch.as_tensor(label2).to(dev)
         output1, output2, output3 = net(x0, x1, label2)
 
@@ -715,14 +752,14 @@ def calculate_test_distances(test_data_vectors, train_batch_size, net, df_test):
             dist += [euclidean_distance1.item()]
             dist += [euclidean_distance2.item()]
     # dist
-    df_test['Distance'] = dist
+    df['Distance'] = dist
     # df_test
     # dist
     # print(results[0:64])
-    return results
+    return results, len(dist)
 
 
-def calculate_accuracy(df_test, results,
+def calculate_accuracy(df, results,
                        result_decision_distance):  # We use the distances to predict whether two names sound the same (experiment with the distance.. maybe mean)
     actual = []  # the real type of the pair
     net_result = []  # the result from the network
@@ -739,8 +776,8 @@ def calculate_accuracy(df_test, results,
         else:
             net_result += ['different']
             actual += ['different']
-    df_test['Actual'] = actual
-    df_test['Network_Prediction_Result'] = net_result
+    df['Actual'] = actual
+    df['Network_Prediction_Result'] = net_result
     accuracy = accuracy_score(actual, net_result)
     print("Accuracy ", accuracy)
     ##PRECISION
@@ -756,8 +793,8 @@ def calculate_accuracy(df_test, results,
     print("Recall: macro = " + str(macro), "micro = " + str(micro), "weighted = " + str(weighted))
     recall = weighted
     # check the accuracy - what is the majority and if they are always chosen
-    majority_same = df_test['Actual'].value_counts()['same'] / df_test['Actual'].size
-    return df_test, accuracy, precision, recall, majority_same
+    majority_same = df['Actual'].value_counts()['same'] / df['Actual'].size
+    return df, accuracy, precision, recall, majority_same
 
 
 def show_false_data_results(df_test):
@@ -788,11 +825,14 @@ def save_model_and_results(df_test, net, config_tuple):  # net? to save
 
 
 # append the tuples to the csv file
-def add_config_to_csv(config_tuple, accuracy, precision, recall, majority_same):
+def add_config_to_csv(config_tuple, train_scores, test_scores, last_epochs_avg, time_took):
     tup = []
+    # add configuration values to the parameters file
     for config in config_tuple:
         tup += [config]
-    tup += [accuracy] + [precision] + [recall] + [majority_same] + [1 - majority_same]  # diff
+
+    tup += train_scores + test_scores + [last_epochs_avg] + [time_took]
+    # tup += [accuracy] + [precision] + [recall] + [majority_same] + [1 - majority_same]  # diff
     print(tup)
     # fields = ['Epochs','Vector_Split_Type','Name_Letter_Split','Result_Decision_Distance',
     #           'Datasets','Train_Batch_Size']
