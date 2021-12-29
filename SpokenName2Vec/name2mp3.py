@@ -31,14 +31,14 @@ def convert_name_to_mp3(name=None):
     if name is not None:
         all_names = [name]
     else:
-        names_df = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters.csv")
+        names_df = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters1.csv")
         all_names = names_df["Name"].tolist()
         all_names = sorted(all_names)
 
     for i, name in enumerate(all_names):
         print("Name:{0} {1}/{2}".format(name, i, len(all_names)))
         try:
-            count_down_time(4)
+            #count_down_time(4)
             create_sound_and_save_mp3(name, output_path)
         except requests.exceptions.HTTPError as e:
             handle_exception_from_google(name, output_path)
