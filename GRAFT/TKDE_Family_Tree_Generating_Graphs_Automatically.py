@@ -863,8 +863,10 @@ def save_child_selected_ancestor_sframe(sf, parental_relation_type):
         os.makedirs(output_path + parental_relation_type)
 
     targeted_field_name = target_field_name.replace(" ", "_")
-    sf.export_csv(output_path + parental_relation_type + "/wikitree_{0}_{1}.csv".format(targeted_field_name,
-                                                                                        parental_relation_type))
+    export_to = output_path + parental_relation_type + "/wikitree_{0}_{1}.csv".format(targeted_field_name,
+                                                                                      parental_relation_type)
+    sf.export_csv(export_to)
+    print(export_to)
 
 
 def create_child_father_sframe_and_save(wikitree_sf, target_field_name, parental_relation_type):
@@ -902,10 +904,10 @@ def shorten_child_father_sframe_and_save(child_father_sf, target_field_name, par
 
     short_child_father_sf = child_father_sf[
         target_field_name, 'Father ' + target_field_name, 'Mother ' + target_field_name]
-    short_child_father_sf.export_csv(
-        output_path + parental_relation_type + "/short_wt_{0}_{1}.csv".format(targeted_field_name,
-                                                                              parental_relation_type))
-
+    export_to = output_path + parental_relation_type + "/short_wt_{0}_{1}.csv".format(targeted_field_name,
+                                                                                      parental_relation_type)
+    short_child_father_sf.export_csv(export_to)
+    print(export_to)
     return short_child_father_sf
 
 
@@ -920,10 +922,10 @@ def shorten_child_grandfather_sframe_and_save(child_grandfather_sf, target_field
         'Grandfather father ' + target_field_name, 'Grandmother father ' + target_field_name,
         'Grandfather mother ' + target_field_name, 'Grandmother mother ' + target_field_name]
 
-    short_child_grandfather_sf.export_csv(
-        output_path + parental_relation_type + "/short_wikitree_{0}_{1}.csv".format(targeted_field_name,
-                                                                                    parental_relation_type))
-
+    export_to = output_path + parental_relation_type + "/short_wikitree_{0}_{1}.csv".format(targeted_field_name,
+                                                                                            parental_relation_type)
+    short_child_grandfather_sf.export_csv(export_to)
+    print(export_to)
     return short_child_grandfather_sf
 
 
@@ -951,11 +953,10 @@ def shorten_child_greatgrandfather_sframe_and_save(child_greatgrandfather_sf, ta
                                                                 'GreatGrandmother Grandfather mother ' + target_field_name,
                                                                 'GreatGrandfather Grandmother mother ' + target_field_name,
                                                                 'GreatGrandmother Grandmother mother ' + target_field_name]
-
-    short_child_greatgrandfather_sf.export_csv(
-        output_path + parental_relation_type + "/short_wikitree_{0}_{1}.csv".format(targeted_field_name,
-                                                                                    parental_relation_type))
-
+    export_to = output_path + parental_relation_type + "/short_wikitree_{0}_{1}.csv".format(targeted_field_name,
+                                                                                            parental_relation_type)
+    short_child_greatgrandfather_sf.export_csv(export_to)
+    print(export_to)
     return short_child_greatgrandfather_sf
 
 
@@ -2619,9 +2620,6 @@ def create_edges_child_greatgrandparents(child_greatgrandfather_ed_filter_chars_
     return child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time
 
 
-# In[31]:
-
-
 # target_field_names = ['Last Name Current']
 target_field_names = ["First Name"]
 # target_field_names = ["Preferred Name"]
@@ -2669,11 +2667,11 @@ prefix_names = ['Van', 'van',
 dataset_path = original_path + 'Family_Trees_TKDE/Family_Trees_TKDE/'
 
 # target fle should be dump_people_user_full.csv
-# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
-original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'short_dump_people_users_100k.csv')
+original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
+# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'short_dump_people_users_100k.csv')
 # short_sf = original_wikitree_sf.head(n=100000)
 # short_sf.export_csv(dataset_path + "short_dump_people_users_100k.csv")
-print("exported dump_people_users_100k")
+# print("exported dump_people_users_100k")
 # original_wikitree_sf = short_sf
 
 results = []
@@ -2729,7 +2727,6 @@ for target_field_name in tqdm(target_field_names):
                     child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_parents(
                         child_father_ed_filter_chars_sf, target_field_name, parental_relation_type, min_chars_count,
                         max_edit_distance)
-
 
                 elif parental_relation_type == "Child_Grandfather":
                     child_ancestors_count_united_sf, filter_by_ed_time, group_by_time, unite_time = create_edges_child_grandparents(
@@ -2788,4 +2785,3 @@ tc.SFrame(
 sf_x = tc.SFrame(
     original_path + 'Family_Trees_TKDE/Family_Trees_TKDE/First_Names/Child_Father/geq_2_chars/wt_First_Name_Child_Father_stacked_no_prefix_ed_geq_2_chars.csv')
 sf_x_2 = sf_x.sort(['Edit_Distance_Child_Mother'], ascending=False)
-
