@@ -2606,8 +2606,8 @@ output_path = original_path + "Family_Trees_TKDE/First_Names/"
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 
-# parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-parental_relation_types = ['Child_Father']
+parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
+# parental_relation_types = ['Child_Father']
 # parental_relation_types = ['Child_Grandfather', 'Child_GreatGrandfather']
 max_edit_distances = [2, 3, 4, 5, 10]
 # min_chars_counts = [2]

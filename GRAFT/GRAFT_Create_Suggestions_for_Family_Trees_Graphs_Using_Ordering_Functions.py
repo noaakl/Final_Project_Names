@@ -719,8 +719,8 @@ def main(original_name):
     target_field_names = ["First Name"]
     output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
 
-    # parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-    parental_relation_types = ['Child_Father']
+    parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
+    # parental_relation_types = ['Child_Father']
     parental_relation_type = 'Child_Father'
     # max_edit_distances = [2, 3, 4, 5, 100]
     max_edit_distances = [2]

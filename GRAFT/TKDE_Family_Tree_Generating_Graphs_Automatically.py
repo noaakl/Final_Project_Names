@@ -2632,8 +2632,8 @@ output_path = original_path + "Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Name
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 
-# parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-parental_relation_types = ['Child_Father']
+parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
+# parental_relation_types = ['Child_Father']
 # parental_relation_types = ['Child_Grandfather', 'Child_GreatGrandfather']
 max_edit_distances = [2, 3, 4, 5, 100]
 # max_edit_distances = [3]
@@ -2785,3 +2785,5 @@ tc.SFrame(
 sf_x = tc.SFrame(
     original_path + 'Family_Trees_TKDE/Family_Trees_TKDE/First_Names/Child_Father/geq_2_chars/wt_First_Name_Child_Father_stacked_no_prefix_ed_geq_2_chars.csv')
 sf_x_2 = sf_x.sort(['Edit_Distance_Child_Mother'], ascending=False)
+
+print("done all")
