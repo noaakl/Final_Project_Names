@@ -8,10 +8,10 @@ Phase to add Negative Examples from methods of name representation as vectors (c
 
 
 def second_phase_negative_examples(short_file_path, dataset, filtered_df):
-    '''
-  The method reads the vector representation csv files and creates a df of the names the
-  algorithms' received distance was large as negative examples
-  '''
+    """
+    The method reads the vector representation csv files and creates a df of the names the
+    algorithms' received distance was large as negative examples
+    """
     # The three methods to represent the names as vectors
     turicreate_df = pd.read_csv(short_file_path + dataset)
     turicreate_df['Method'] = 'turicreate'
@@ -52,8 +52,8 @@ def second_phase_negative_examples(short_file_path, dataset, filtered_df):
 # pairs_df = pd.DataFrame({'Pairs': pairs, 'originals': originals,
 #                          'Positive': positives, 'Negative': negatives})
 
+# TODO: check if needed
 def add_random_negatives_phase_two(unique_df):
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED?
     # create triplets of data ###################check if needed (easy negative examples)
     originals = unique_df['Original'].tolist()
     positives = unique_df['Positive'].tolist()

@@ -46,8 +46,3 @@ class SiameseNetwork(nn.Module):
         output2 = self.forward_once(input2)
         output3 = self.forward_once(input3)
         return output1.to(dev), output2.to(dev), output3.to(dev)
-
-
-net = SiameseNetwork(784)
-
-print(net)

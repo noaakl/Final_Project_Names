@@ -1,6 +1,8 @@
 import string
 import torch
 import itertools
+import random
+import fasttext
 
 """**Creating Vectors**
 
@@ -15,14 +17,13 @@ We have two ways to represent the vectors:
 1. Dense - A list of zeros and ones. We put 1 in the indexes that represent the b-grams. For exaple, the list **[<a, aa, a>]** will have ones in 728, 0 and 27.
 2. Sparse- Pytorch has a special object that helps represent big vectors with a lot of zeros in more efficient way. You can read about sparse [here](https://pytorch.org/docs/stable/sparse.html).
 
-
-
-
-
 """
 
 
 def calculate_gram_frequency(dict, name_split):
+    """
+    The function is used to build the gram dictionary for calculating frequency
+    """
     for gram in name_split:
         if gram in dict:
             dict[gram] += 1
@@ -41,7 +42,7 @@ def word2sparse(name, name_letter_split, gram_frequencies_dict = {}):
     name = name.lower()
     # name_split = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
     # calculate_gram_frequency(gram_frequencies_dict, name_split)
-    name = [26] + [ord(c) - ord('a') for c in name] + [27]
+    name = [26] + [ord(c) - ord('a') for c in name] + [27] # start + end (26 letters)
     name = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
     nameidx = None
     if name_letter_split == 1:
@@ -51,9 +52,7 @@ def word2sparse(name, name_letter_split, gram_frequencies_dict = {}):
     elif name_letter_split == 3:
         nameidx = torch.tensor([[0, pair[0] * (28 ** 2) + pair[1] * 28 + pair[2]] for pair in name])
     values = torch.ones(len(name))
-    # print(nameidx)
     s = torch.sparse_coo_tensor(nameidx.t(), values, (1, 28 ** name_letter_split))
-    # print(s)
     # nnz -> how many are filled , tensor dimensions
     return s, 28 ** name_letter_split # 28 ** 2
 
@@ -72,14 +71,16 @@ def word2dense(name, name_letter_split):
 
 def create_grams_dict(number_of_grams):
     """
-    The function creates a gram dictionary using the number_of_grams input given in order to creat a representation
+    The function creates a gram dictionary using the number_of_grams input given in order to create a representation
     for the letter combinations
     """
-    alphabet = list(string.ascii_lowercase)
+    alphabet = list(string.ascii_lowercase) # + ['<'] + ['>'] # alphabet & start + end chars
     if number_of_grams == 1:
         alph_dict = dict((alphabet[indx], indx) for indx in range(len(alphabet)))
     else:
-        letter_combinations = [''.join(tup) for tup in list(itertools.product(alphabet, repeat=number_of_grams))]
+        combos = list(itertools.product(alphabet, repeat=number_of_grams))
+        random.shuffle(combos)
+        letter_combinations = [''.join(tup) for tup in combos]
         alph_dict = dict((letter_combinations[idx], idx) for idx in range(len(letter_combinations)))
     return alph_dict, len(alph_dict)
 
@@ -106,8 +107,10 @@ def word_ngrams(name, number_of_grams):
 #   word_embeddings = c2v_model.vectorize_words([name])
 #   return word_embeddings.__getitem__(0)
 
-# convert names to vec representation by using addition
 def name2vec_addition(name, name_letter_split):
+    """
+    The function converts name to vector representation by using addition
+    """
     name = name.lower()
     name = [26] + [ord(c) - ord('a') for c in name] + [27]
     name = [name[i:i + 2] for i in range(len(name) - 1)]
@@ -116,3 +119,13 @@ def name2vec_addition(name, name_letter_split):
         sum_pair[0] += pair[0]
         sum_pair[1] += pair[1]
     return sum_pair
+
+
+def nam2vec_fasttext(name, name_letter_split = 2):
+    """
+    The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
+    representing the given word
+    """
+    model = fasttext.load_model("name2vec_model.bin")
+    word_vec = torch.Tensor(model.get_word_vector(name))
+    return word_vec, len(word_vec)
