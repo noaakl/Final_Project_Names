@@ -78,15 +78,19 @@ def create_parental_relation_types_csv(target_field_names, min_chars_counts, max
                     child_father_full_path = get_child_father_full_path(target_field_name, min_chars_count,
                                                                         max_edit_distance, min_occurance, output_path)
                     child_father_edges_df = pd.read_csv(child_father_full_path)
+                    # print(child_father_full_path)
 
                     child_grandfather_full_path = get_child_gandfather_full_path(target_field_name, min_chars_count,
                                                                                  max_edit_distance, min_occurance, output_path)
                     child_grandfather_edges_df = pd.read_csv(child_grandfather_full_path) # TODO: #
+                    # print(noaa)
+                    # print(child_grandfather_full_path)
 
                     child_greatgrandfather_full_path = get_child_greatgandfather_full_path(target_field_name,
                                                                                            min_chars_count,
                                                                                            max_edit_distance, min_occurance, output_path)
                     child_greatgrandfather_edges_df = pd.read_csv(child_greatgrandfather_full_path) # TODO: #
+                    # print(child_greatgrandfather_full_path)
 
                     df = pd.concat([child_father_edges_df, child_grandfather_edges_df, child_greatgrandfather_edges_df]) # TODO: #
                     # df = pd.concat([child_father_edges_df])  # TODO: !#
@@ -374,6 +378,7 @@ def create_results_csv(target_field_names, parental_relation_types, min_chars_co
                         full_path = get_full_path(target_field_name, parental_relation_type, min_chars_count,
                                                   max_edit_distance, min_occurance, output_path)
                         edges_sf = tc.SFrame.read_csv(full_path)
+                        # print(full_path)
 
                         start_time = time.time()
 
@@ -383,11 +388,12 @@ def create_results_csv(target_field_names, parental_relation_types, min_chars_co
                             [(r['Ancestor_Name'], r['Child_Name'], r['sum']) for r in edges_sf])
 
                         # TODO: only when we want new one
-                        node_count, edge_count, avg_in_degree, avg_out_degree = get_graph_info(name_graph)
+                        # node_count, edge_count, avg_in_degree, avg_out_degree = get_graph_info(name_graph)
+                        #
+                        # graph_creation_time = time.time() - start_time
+                        #
+                        # start_time = time.time()
 
-                        graph_creation_time = time.time() - start_time
-
-                        start_time = time.time()
                         for neighbors_count in neighbors_counts:
                             for i, ranking_function in tqdm(enumerate(ranking_functions)):
                                 # print(
@@ -398,7 +404,7 @@ def create_results_csv(target_field_names, parental_relation_types, min_chars_co
                                 #         min_occurance,
                                 #         neighbors_count))
                                 dfs = []
-                                print("Suggesting candidates.....")
+                                # print("Suggesting candidates.....")
                                 for j, original_name in enumerate(original_names):
                                     # print("\rSuggesting candidates for: {0} {1} {2}/{3}".format(ranking_function,
                                     #                                                             original_name, i,
@@ -409,43 +415,43 @@ def create_results_csv(target_field_names, parental_relation_types, min_chars_co
                                         candidates_df = getattr(OrderingFunctions, ranking_function)(name_graph,
                                                                                                      original_name,
                                                                                                      neighbors_count)
-                                # TODO: only when we want new one
-
-                                        if candidates_df is not None:
-                                            dfs.append(candidates_df)
-
-                                print("finished suggesting candidates")
-                                ordering_function_execution_time = time.time() - start_time
-
-                                suggestions_df = pd.concat(dfs)
-                                suggestions_df = suggestions_df.sort_values(by=['Original', 'Rank'])
-                                # results_df.to_csv(output_path + "name_based_network_ED_1_to_3_ranking_by_Order_2_and_ED_suggestions.csv", index=False)
-
-                                results_path = get_results_full_path(target_field_name, parental_relation_type,
-                                                                     min_chars_count, max_edit_distance,
-                                                                     min_occurance, neighbors_count,
-                                                                     ranking_function, output_path)
-                                suggestions_df.to_csv(results_path, index=False)
-
-                                result = (target_field_name, parental_relation_type, min_chars_count, max_edit_distance,
-                                          min_occurance, ranking_function, neighbors_count, graph_creation_time,
-                                          ordering_function_execution_time, node_count, edge_count, avg_in_degree,
-                                          avg_out_degree)
-                                results.append(result)
-
-    results_df = pd.DataFrame(results, columns=['target_field_name', 'parental_relation_type', 'min_chars_count',
-                                                'max_edit_distance',
-                                                'min_occurance', 'ranking_function', 'neighbors_count',
-                                                'graph_creation_time', 'ordering_function_execution_time',
-                                                'node_count', 'edge_count', 'avg_in_degree', 'avg_out_degree'])
-    now = datetime.now()
-
-    date_time = now.strftime("%d/%m/%Y_%H:%M:%S")
-    date_time = date_time.replace(':', '_')
-    date_time = date_time.replace('/', '_')
-    results_df.to_csv(output_path + "Ordering_Functions_Time_Performance_{0}.csv".format(date_time), index=False)
-
-    # # print("Done!")
+    #                             # TODO: only when we want new one
+    #
+    #                                     if candidates_df is not None:
+    #                                         dfs.append(candidates_df)
+    #
+    #                             print("finished suggesting candidates")
+    #                             ordering_function_execution_time = time.time() - start_time
+    #
+    #                             suggestions_df = pd.concat(dfs)
+    #                             suggestions_df = suggestions_df.sort_values(by=['Original', 'Rank'])
+    #                             # results_df.to_csv(output_path + "name_based_network_ED_1_to_3_ranking_by_Order_2_and_ED_suggestions.csv", index=False)
+    #
+    #                             results_path = get_results_full_path(target_field_name, parental_relation_type,
+    #                                                                  min_chars_count, max_edit_distance,
+    #                                                                  min_occurance, neighbors_count,
+    #                                                                  ranking_function, output_path)
+    #                             suggestions_df.to_csv(results_path, index=False)
+    #
+    #                             result = (target_field_name, parental_relation_type, min_chars_count, max_edit_distance,
+    #                                       min_occurance, ranking_function, neighbors_count, graph_creation_time,
+    #                                       ordering_function_execution_time, node_count, edge_count, avg_in_degree,
+    #                                       avg_out_degree)
+    #                             results.append(result)
+    #
+    # results_df = pd.DataFrame(results, columns=['target_field_name', 'parental_relation_type', 'min_chars_count',
+    #                                             'max_edit_distance',
+    #                                             'min_occurance', 'ranking_function', 'neighbors_count',
+    #                                             'graph_creation_time', 'ordering_function_execution_time',
+    #                                             'node_count', 'edge_count', 'avg_in_degree', 'avg_out_degree'])
+    # now = datetime.now()
+    #
+    # date_time = now.strftime("%d/%m/%Y_%H:%M:%S")
+    # date_time = date_time.replace(':', '_')
+    # date_time = date_time.replace('/', '_')
+    # results_df.to_csv(output_path + "Ordering_Functions_Time_Performance_{0}.csv".format(date_time), index=False)
+    #
+    # # # print("Done!")
     return name_graph
 
 
@@ -479,7 +485,7 @@ def compare_suggestion_with_ground_truth_by_provided_dfs(suggestions_df, ground_
     suggestions_df['Is_Original_Synonym'] = suggestions_df.apply(
         lambda x: compare_suggestion(x["Original"], x["Candidate"], ground_truth_df), axis=1)
     # TODO: only when we want new one
-    suggestions_df.to_csv(full_path_suggestions_file_no_prefix + "_with_gt.csv", index=False)
+    # suggestions_df.to_csv(full_path_suggestions_file_no_prefix + "_with_gt.csv", index=False)
     return suggestions_df
 
 
@@ -487,6 +493,7 @@ def calculate_performance_for_suggestions(ranking_functions, output_path, graph_
     # print("calculate_performance_for_suggestions...")
     for ranking_function in ranking_functions:
         suggestions_df = pd.read_csv(output_path + "{0}_{1}_suggest_with_gt.csv".format(graph_type, ranking_function))
+        # print(output_path + "{0}_{1}_suggest_with_gt.csv".format(graph_type, ranking_function))
         calculate_performance(suggestions_df, ground_truth_df, ranking_function)
 
 
@@ -645,6 +652,7 @@ def prepere_to_calculate_performance(target_field_names, parental_relation_types
                                 full_path_suggestions_file_no_prefix = full_path_suggestions_file.split(".csv")[0]
 
                                 suggestions_df = pd.read_csv(full_path_suggestions_file)
+                                # print(full_path_suggestions_file)
 
                                 suggestions_with_ground_truth_df = compare_suggestion_with_ground_truth_by_provided_dfs(
                                     suggestions_df, ground_truth_df, ranking_function,
@@ -705,6 +713,7 @@ def min_ED_of_DM2(name_graph, original_name):
 
         candidates_df["Rank"] = candidates_df["Min_Edit_Distance_of_DM"]
         # candidates_df = candidates_df.sort_values(by='Min_Edit_Distance_of_DM')
+        candidates_df = candidates_df.sort_values(by='Order')
         candidates_df = candidates_df.sort_values(by='Rank')
         # head_candidates_df = candidates_df.head(10)
         return candidates_df
@@ -712,27 +721,15 @@ def min_ED_of_DM2(name_graph, original_name):
 
 
 def get_suggestion(original_name):
-    print("looking for candidates for " + original_name)
-    now_time = time.time()
-    print(now_time)
     # # Create child-all ancestors graph before suggesting
-
-    # parental_relation_type = ''
     target_field_names = ["First Name"]
-    output_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
-
-    parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-    # parental_relation_types = ['Child_Father']
-    parental_relation_type = 'Child_Father'
-    # max_edit_distances = [2, 3, 4, 5, 100]
-    max_edit_distances = [1, 2, 3]
-    min_chars_counts = [2, 3]
-    # min_chars_counts = [2]
-    # min_occurances = [5, 10]
+    output_path = "./Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
+    parental_relation_types = ['Child_Father', 'Child_Grandfather']
+    max_edit_distances = [2]
+    min_chars_counts = [2]
     min_occurances = [10]
 
-    # input_path = "/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/"
-    ground_truth_df = pd.read_csv('/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/'
+    ground_truth_df = pd.read_csv('./Family_Trees_TKDE/Family_Trees_TKDE/'
                                   'ground_truth_constructed_based_on_all_first_names_behindthename.csv')
 
     original_names = ground_truth_df["Name"].unique().tolist()
@@ -743,21 +740,10 @@ def get_suggestion(original_name):
                          'order_2_and_ED',
                          'min_ED_of_DM',
                          'ED_and_order_and_ED_of_DM']
-    # name_graph = None
-    create_parental_relation_types_csv(target_field_names, min_chars_counts, max_edit_distances, min_occurances, output_path, parental_relation_types)
     name_graph = create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, output_path, neighbors_counts, ranking_functions, original_names)
-    prepere_to_calculate_performance(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, ranking_functions, neighbors_counts, ground_truth_df, output_path)
 
     head_candidates_df = min_ED_of_DM2(name_graph, original_name)
-    # name_graph.to_csv(output_path + "name_graph.csv")
-    # if not head_candidates_df:
-    #     return name_graph
-    head_candidates_df.to_csv(output_path + "head_candidates_df.csv")
 
     print("Done all")
-    print(time.time() - now_time)
-    return head_candidates_df.head(20)
+    return head_candidates_df.head(10)["Candidate"]
 
-
-# print(main(original_name="Jan"))
-print(get_suggestion(original_name="John"))
