@@ -723,13 +723,13 @@ def min_ED_of_DM2(name_graph, original_name):
 def get_suggestion(original_name):
     # # Create child-all ancestors graph before suggesting
     target_field_names = ["First Name"]
-    output_path = "./Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
+    output_path = "../Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
     parental_relation_types = ['Child_Father', 'Child_Grandfather']
     max_edit_distances = [2]
     min_chars_counts = [2]
     min_occurances = [10]
 
-    ground_truth_df = pd.read_csv('./Family_Trees_TKDE/Family_Trees_TKDE/'
+    ground_truth_df = pd.read_csv('../Family_Trees_TKDE/Family_Trees_TKDE/'
                                   'ground_truth_constructed_based_on_all_first_names_behindthename.csv')
 
     original_names = ground_truth_df["Name"].unique().tolist()
@@ -741,9 +741,6 @@ def get_suggestion(original_name):
                          'min_ED_of_DM',
                          'ED_and_order_and_ED_of_DM']
     name_graph = create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, output_path, neighbors_counts, ranking_functions, original_names)
-
     head_candidates_df = min_ED_of_DM2(name_graph, original_name)
-
-    print("Done all")
     return head_candidates_df.head(10)["Candidate"]
 
