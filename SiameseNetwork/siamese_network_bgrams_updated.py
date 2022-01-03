@@ -52,8 +52,12 @@ import re
 import time
 import itertools
 from csv import writer
-import string
 import pickle
+
+import phase_one_train
+import phase_two_train
+import name_representation
+import siamese_network
 
 # import chars2vec
 # split reference https://towardsdatascience.com/from-words-to-vectors-e24f0977193e
@@ -88,7 +92,7 @@ def main_activation():
     # Parameter combinations for the network train ('configs')
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
     competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
-    epochs = [10, 50, 100]  # [50,60,70,80,90,100,120]
+    epochs = [10]  # [50,60,70,80,90,100,120]
     vector_split_type = ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
     name_letter_split = [1, 2, 3]  # [1,2,3] bgrams
     result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
@@ -110,15 +114,15 @@ def main_activation():
 
         filtered_df = filter_names(short_file_path, datasets)  # filter names and save df to file
         # first phase train examples
-        methods_df = first_phase_negative_examples(long_file_path, competitor_dataset)
-        train_df = create_train_df(methods_df, filtered_df)
-        train_data, test_data = train_test_split(train_df)
-        train_data = add_random_negatives(train_df, train_data)  # add random easy negatives
+        methods_df = phase_one_train.first_phase_negative_examples(long_file_path, competitor_dataset)
+        train_df = phase_one_train.create_train_df(methods_df, filtered_df)
+        train_data, test_data = phase_one_train.train_test_split(train_df)
+        train_data = phase_one_train.add_random_negatives(train_df, train_data)  # add random easy negatives
         print("done phase1")
         # second phase train examples
-        unique_df = second_phase_negative_examples(short_file_path, datasets, filtered_df)
-        trios = add_random_negatives_phase_two(unique_df)
-        train_data, test_data = train_test_split_phase_two(train_data, test_data, trios)
+        unique_df = phase_two_train.second_phase_negative_examples(short_file_path, datasets, filtered_df)
+        trios = phase_two_train.add_random_negatives_phase_two(unique_df)
+        train_data, test_data = phase_two_train.train_test_split_phase_two(train_data, test_data, trios)
         print("done phase2")
 
         # create and train the net
@@ -128,14 +132,13 @@ def main_activation():
         net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim)
         print("done_train")
         df_train = prepare_data(train_data)
-        # df_train -- anch, pos, label| anch, neg, dist
+        # df_train -- anch, pos, label | anch, neg, dist
         train_results, train_size = calculate_distances(train_data_vectors, train_batch_size, net, df_train)
         # df_train -- anch, pos, label, dist | anch, neg, label, dist
         df_train, train_accuracy, train_precision, train_recall, train_majority_same = calculate_accuracy(df_train,
                                                                                                           train_results,
                                                                                                           result_decision_distance)
         # df_train -- anch, pos, label, dist, actual, net_pred | anch, neg, label, dist, actual, net_pred
-        print("Train Dataframe: ", df_train)
         train_scores = [train_size, train_accuracy, train_precision, train_recall, train_majority_same,
                         1 - train_majority_same]
         df_test = prepare_data(test_data)
@@ -156,7 +159,7 @@ def main_activation():
 
 
 def save_gram_frequencies_dict(gram_frequencies):
-    with open('gram_frequencies_dictionary.pkl', 'wb') as f:
+    with open('gram_frequencies_dictionary_new.pkl', 'wb') as f:
         pickle.dump(gram_frequencies, f)
 
 
@@ -169,22 +172,22 @@ def filter_names(short_file_path, dataset):
       The functions filter the names to remove and returns the new df
       The function saves the filtered df as a csv
     """
-    vals_toRemove = ['Schleswigholsteinsonderburgglcksburg', 'Mariemargueriteyvetterollande',
-                     'Schleswigholsteinsonderburg', 'Mariemadeleineconstance',
-                     'Mariemargueriteanglique', 'Josephphilippenapoleon', 'Mariefranoiseangelique',
-                     'Mariemadeleineanglique', 'Mariemargueritepascale', 'Jeanbaptistebarthlemy',
-                     'Mariemadeleinemalvina', 'Mariemargueritejeanne', 'Charlesambroiseemery',
-                     'Jeanbaptistevalentin', 'Jeanbaptistefrancois', 'Jeanbaptistenapoleon',
-                     'Josephfrancoisarthur', 'Josephphilippehorace', 'Mariecatherinejoseph',
-                     'Mariemargueriteagnes', 'Mariemargueriteccile', 'Jeanbaptisteadolphe',
-                     'Jeanbaptisteauguste', 'Jeanbaptistemathieu', 'Jeanbaptisteantoine',
-                     'Jeanbaptistefranois', 'Jeanbaptistebastien', 'Jeanbaptistegervais', 'Xxxxxxxxx']
+    vals_to_remove = ['Schleswigholsteinsonderburgglcksburg', 'Mariemargueriteyvetterollande',
+                      'Schleswigholsteinsonderburg', 'Mariemadeleineconstance',
+                      'Mariemargueriteanglique', 'Josephphilippenapoleon', 'Mariefranoiseangelique',
+                      'Mariemadeleineanglique', 'Mariemargueritepascale', 'Jeanbaptistebarthlemy',
+                      'Mariemadeleinemalvina', 'Mariemargueritejeanne', 'Charlesambroiseemery',
+                      'Jeanbaptistevalentin', 'Jeanbaptistefrancois', 'Jeanbaptistenapoleon',
+                      'Josephfrancoisarthur', 'Josephphilippehorace', 'Mariecatherinejoseph',
+                      'Mariemargueriteagnes', 'Mariemargueriteccile', 'Jeanbaptisteadolphe',
+                      'Jeanbaptisteauguste', 'Jeanbaptistemathieu', 'Jeanbaptisteantoine',
+                      'Jeanbaptistefranois', 'Jeanbaptistebastien', 'Jeanbaptistegervais', 'Xxxxxxxxx']
     # The ground truth is pair of Original and Candidate with distance 0.
     # Pairs with distance 0 are pairs that sounded the same
     pd_reader = pd.read_csv(short_file_path + dataset)  # "knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv")
     filtered_df = pd_reader[pd_reader["Distance"] == 0]
-    filtered_df = filter_rows_by_values(filtered_df, "Candidate", vals_toRemove)
-    filtered_df = filter_rows_by_values(filtered_df, "Original", vals_toRemove)
+    filtered_df = filter_rows_by_values(filtered_df, "Candidate", vals_to_remove)
+    filtered_df = filter_rows_by_values(filtered_df, "Original", vals_to_remove)
     # save 'our' df as ground truth of spokenName2Vec
     filtered_df.to_csv("spokenName2Vec_ground_truth.csv")
     return filtered_df
@@ -211,348 +214,9 @@ def negative(originals, index):
 First method to create the train data
 """
 
-'''
-Phase to add Negative Examples from competitors
-'''
-
-
-def first_phase_negative_examples(long_file_path, competitor_dataset):
-    """
-    The method reads the competitor csv files and creates a df of the names the
-    algorithm did not agree with 'Behind The Name' as negative examples
-    """
-    # filtered_df -> positive (by us, sound2vec) , methods_df -> negative (synonym 0 by behind the name)
-    # Original -> Name appeared on our df and on competitors' negatives
-    # Candidate_x -> competitors' incorrect suggestion for name in 'Original' (synonym 0)
-    # Candidate_y -> our correct suggestion for name in 'Original'
-
-    if not competitor_dataset:  # the 2 datasets
-        # Suggestion of the competitors
-        dm_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Double_Metaphone_with_gt.csv')
-        mrc_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Matching_Rating_Codex_with_gt.csv')
-        metaphone_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Metaphone_with_gt.csv')
-        nysiis_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Nysiis_with_gt.csv')
-        soundex_df = pd.read_csv(long_file_path + 'top_ten_suggestions_for_gt_by_Soundex_with_gt.csv')
-        # Suggestion of the competitors version 2
-        dm_v2_df = pd.read_csv(long_file_path + 'v2_top_ten_suggestions_for_gt_by_Double_Metaphone_with_gt.csv')
-        mrc_v2_df = pd.read_csv(long_file_path + 'v2_top_ten_suggestions_for_gt_by_Matching_Rating_Codex_with_gt.csv')
-        metaphone_v2_df = pd.read_csv(long_file_path + 'v2_top_ten_suggestions_for_gt_by_Metaphone_with_gt.csv')
-        nysiis_v2_df = pd.read_csv(long_file_path + 'v2_top_ten_suggestions_for_gt_by_Nysiis_with_gt.csv')
-        soundex_v2_df = pd.read_csv(long_file_path + 'v2_top_ten_suggestions_for_gt_by_Soundex_with_gt.csv')
-        # Adding the name of the method as a column
-        dm_v2_df['Method'] = 'Double Metaphone'
-        mrc_v2_df['Method'] = 'Matching Rating Codex'
-        metaphone_v2_df['Method'] = 'Metaphone'
-        nysiis_v2_df['Method'] = 'Nysiis'
-        soundex_v2_df['Method'] = 'Soundex'
-    else:  # use the new competitor dataset
-        # Suggestion of the competitors
-        # path = "/content/drive/MyDrive/Siamese_Datasets/Competitor_Results/"
-        path = './Siamese_Datasets/Competitor_Results/'
-        dm_df = pd.read_csv(path + 'Double_Metaphone/Double_Metaphone_names.csv')
-        mrc_df = pd.read_csv(path + 'Matching_Rating_Codex/Matching_Rating_Codex_names.csv')
-        metaphone_df = pd.read_csv(path + 'Metaphone/Metaphone_names.csv')
-        nysiis_df = pd.read_csv(path + 'Nysiis/Nysiis_names.csv')
-        soundex_df = pd.read_csv(path + 'Soundex/Soundex_names.csv')
-
-    # Adding the name of the method as a column
-    dm_df['Method'] = 'Double Metaphone'
-    mrc_df['Method'] = 'Matching Rating Codex'
-    metaphone_df['Method'] = 'Metaphone'
-    nysiis_df['Method'] = 'Nysiis'
-    soundex_df['Method'] = 'Soundex'
-    if competitor_dataset:
-        # Concat the datasets
-        dfs = [dm_df, mrc_df, metaphone_df, nysiis_df, soundex_df]
-    else:
-        # Concat the datasets
-        dfs = [dm_df, mrc_df, metaphone_df, nysiis_df, soundex_df, dm_v2_df, mrc_v2_df,
-               metaphone_v2_df, nysiis_v2_df, soundex_v2_df]
-    methods_df = pd.concat(dfs)
-    # Find the ones the algorithms got wrong
-    # FOR HARD NEGATIVE EXAMPLES OF COMPETITORS
-    methods_df = methods_df[methods_df['Is_Original_Synonym'] == 0]
-    return methods_df
-
-
-"""We take the mistakes of the competitors and use the as negative samples"""
-
-
-def create_train_df(methods_df, filtered_df):
-    """
-    The method merges the positive and negative dfs and creates the train df with the candidates
-    """
-    originals_df = pd.merge(methods_df, filtered_df, how="inner", left_on='Original', right_on='Original')
-    train_df = originals_df[['Original', 'Candidate_y', 'Candidate_x']]
-    train_df = train_df.rename(columns={'Candidate_y': 'Positive',
-                                        'Candidate_x': 'Negative'})
-    return train_df
-
-
-# TODO: CHECK IF NEEDED
-def helper2():  # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
-    # CHECK IF NEEDED --> ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
-
-    # Samples From ground truth we created from turicreate dataset
-    ground_truth_df = pd.read_csv("./spokenName2Vec_ground_truth.csv")
-    # For each name we mark the letter it starts with
-    ground_truth_df["Start"] = ground_truth_df["Original"].apply(
-        lambda x: x[0])
-    originals = ground_truth_df['Original']
-    negatives = []
-    # Creating random negatives
-    for i in tqdm(range(len(originals))):
-        negatives += [negative(originals, i)]
-
-    # Updating the ground truth
-    ground_truth_df['Negative'] = negatives
-    # ground_truth_df
-    ground_truth_df.to_csv('spokenName2Vec_ground_truth.csv', index=False)
-    # df = ground_truth_df[ground_truth_df["Start"] == "A"]
-
-
-# TODO: CHECK IF NEEDED
-def helper():  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
-    helper2()
-    # CHECK IF NEEDED --> ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
-    with open('./spokenName2Vec_ground_truth.csv', newline='') as f:
-        reader = csv.reader(f)
-        data = list(reader)
-    triplets = []
-    for row in tqdm(data):
-        triplets = triplets + [[row[2], row[3], row[8]]]
-    triplets = triplets[1:]
-    random.shuffle(triplets)
-    return triplets
-
-
-def train_test_split(train_df):
-    # Split to train data and test data
-    ### ADD EXTRA RANDOM NEGATIVES (adding the triplets..)
-    triplets = helper()
-    originals = train_df['Original']
-    pos = list(train_df['Positive'])
-    for row in tqdm(train_df.itertuples()):
-        triplets = triplets + [[row[1], row[2], row[3]]]
-    triplets = triplets[1:]
-
-    l = int(0.66 * len(triplets))
-    train_data = triplets[:l]
-    test_data = triplets[l:]
-    # test_data
-    ### WITHOUT THE EXTRA RANDOM NEGATIVES USE THIS BELOW
-    # l = int(0.66 * len(train_df))
-    # train_data = train_df[:l]
-    # test_data = train_df[l:]
-    # test_data
-    return train_data, test_data
-
-
-# TODO: CHECK IF NEEDED - yes..?
-def add_random_negatives(train_df, train_data):  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED?
-    ################check if needed (used to add more random negatives) -> random negative for every unique positive
-    # Samples from competitors
-    """
-    The method adds random 'easy' negative examples to the train data
-    """
-    train_array = train_df['Positive'].unique()
-    competitors = []
-    for pos in tqdm(train_array):
-        pos_df = train_df[train_df['Positive'] == pos]
-        org = random.choice(pos_df['Original'].to_list())
-        postv = random.choice(pos_df['Positive'].to_list())
-        negtv = random.choice(pos_df['Negative'].to_list())
-        competitors += [[org, postv, negtv]]
-    train_data = train_data + competitors
-    return train_data
-
-
-"""**Data from competitors**
-
+"""
 Second method to create the train-data.
-All Negatives in this method are mistakes of competitors
 """
-
-'''
-Phase to add Negative Examples from methods of name representation as vectors (can switch with larger file later)
-'''
-
-
-def second_phase_negative_examples(short_file_path, dataset, filtered_df):
-    '''
-  The method reads the vector representation csv files and creates a df of the names the 
-  algorithms' received distance was large as negative examples
-  '''
-    # The three methods to represent the names as vectors
-    turicreate_df = pd.read_csv(short_file_path + dataset)
-    turicreate_df['Method'] = 'turicreate'
-    wav2vec_df = pd.read_csv(short_file_path + "knn_suggestions_according_sound_pandas_imp_wav2vec.csv")
-    wav2vec_df['Method'] = 'wav2vec'
-    pyAudioAnalysis_df = pd.read_csv(short_file_path + "knn_suggestions_according_sound_pandas_imp_pyAudioAnalysis.csv")
-    pyAudioAnalysis_df['Method'] = 'pyAudioAnalysis'
-    # add negative examples from vector representation methods
-    # turicrete mistakes have larger distance from other methods
-    turicreate_df = turicreate_df[turicreate_df['Distance'] >= 4]  # add distance to parameters?
-    dfs = [turicreate_df, wav2vec_df, pyAudioAnalysis_df]
-    methods_df = pd.concat(dfs)
-    methods_df = methods_df[methods_df['Distance'] >= 1]  # add distance to parameters?
-    methods_df = methods_df.rename(columns={'Candidate': 'Negative'})
-    filtered_df = filtered_df.rename(columns={'Candidate': 'Positive',
-                                              'Distance': 'Distance_Spoken_Name',
-                                              'Edit_Distance': 'Edit_Distance_Spoken_Name'})
-    # merge the vector representation df with the filtered df
-    sn_gt_df = pd.merge(methods_df, filtered_df, how="inner", left_on='Original', right_on='Original')
-    # trim the df
-    triplets_df = sn_gt_df[['Original', 'Positive', 'Negative']]
-    # Drop duplicate (original + positive) pairs
-    unique_df = triplets_df.drop_duplicates(subset=['Original', 'Positive'])
-    return unique_df
-
-
-# !!!!!!!!!!!!!!!! NEEDED? CHECK
-# CHECK IF NEEDED AFTER DUPLICATE REMOVE FUNCTION
-# # find unique pairs(original, positive)
-# originals = triplets_df['Original'].tolist()
-# positives = triplets_df['Positive'].tolist()
-# negatives = triplets_df['Negative'].tolist()
-
-# pairs = []
-# for i, org in enumerate(originals):
-#   pairs += [org + positives[i]]
-
-# pairs_df = pd.DataFrame({'Pairs': pairs, 'originals': originals, 
-#                          'Positive': positives, 'Negative': negatives})
-
-def add_random_negatives_phase_two(unique_df):
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED?
-    # create triplets of data ###################check if needed (easy negative examples)
-    originals = unique_df['Original'].tolist()
-    positives = unique_df['Positive'].tolist()
-    negatives = unique_df['Negative'].tolist()
-    trios = []
-    for i, org in enumerate(originals):
-        trios += [[org, positives[i], negatives[i]]]
-        random_negative = negative(originals, i)
-        trios += [[originals[i], positives[i], random_negative]]
-
-    random.shuffle(trios)
-
-    print(trios[0])
-    print(len(trios))
-    return trios
-
-
-def train_test_split_phase_two(train_data, test_data, trios):
-    # l = int(0.66 * len(unique_df))
-    # train_data = unique_df[:l]
-    # test_data = unique_df[l:]
-    # test_data
-    ######################### DELETE IF NOT NEEDED TO ADD RANDOM NEGATIVES (use above)
-    l = int(0.66 * len(trios))
-    train_data += trios[:l]
-    test_data += trios[l:]
-    return train_data, test_data
-
-
-"""**Creating Vectors**
-
-In this notebook we use an embedding method inspired by FastText sub-word generation. For a word, we generate charecter b-grams in it. 
-
-
-*   We take a name and add angular brackets to denote the beginning and end of a word. E.g **Marc** --> **\<marc>**
-*   Then, we generate charecter b-grams. For exaple: **\<marc>** --> **[<m, ma, ar, rc, c>]**
-*   Then, we take each pair of letter as a number in base 28 and convert them to base 10. ('<' = 26, '>' = 27)
-
-We have two ways to represent the vectors:
-1. Dense - A list of zeros and ones. We put 1 in the indexes that represent the b-grams. For exaple, the list **[<a, aa, a>]** will have ones in 728, 0 and 27.
-2. Sparse- Pytorch has a special object that helps represent big vectors with a lot of zeros in more efficient way. You can read about sparse [here](https://pytorch.org/docs/stable/sparse.html).
-
-
-
-
-
-"""
-
-
-def calculate_gram_frequency(dict, name_split):
-    for gram in name_split:
-        if gram in dict:
-            dict[gram] += 1
-        else:
-            dict[gram] = 1
-
-
-# Convert names to sparse
-def word2sparse(name, name_letter_split, gram_frequencies_dict):
-    name = name.lower()
-    name_split = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
-    calculate_gram_frequency(gram_frequencies_dict, name_split)
-    name = [26] + [ord(c) - ord('a') for c in name] + [27]
-    name = [name[i:i + name_letter_split] for i in range(len(name) - 1)]
-    nameidx = torch.tensor([[0, pair[0] * 28 + pair[1]] for pair in name])
-    values = torch.ones(len(name))
-    s = torch.sparse_coo_tensor(nameidx.t(), values, (1, 28 ** 2))
-    return s, 28 ** 2
-
-
-# Convert names to dense
-def word2dense(name, name_letter_split):
-    name = name.lower()
-    name = [26] + [ord(c) - ord('a') for c in name] + [27]
-    name = [name[i:i + name_letter_split] for i in range(len(name) - 1)]
-    nameidx = [pair[0] * 28 + pair[1] for pair in name]
-    dense = torch.zeros(28 ** 2)
-    for idx in nameidx:
-        dense[idx] = 1
-    return dense, 28 ** 2
-
-
-def create_grams_dict(number_of_grams):
-    """
-    The function creates a gram dictionary using the number_of_grams input given in order to creat a representation
-    for the letter combinations
-    """
-    alphabet = list(string.ascii_lowercase)
-    if number_of_grams == 1:
-        alph_dict = dict((alphabet[indx], indx) for indx in range(len(alphabet)))
-    else:
-        letter_combinations = [''.join(tup) for tup in list(itertools.product(alphabet, repeat=number_of_grams))]
-        alph_dict = dict((letter_combinations[idx], idx) for idx in range(len(letter_combinations)))
-    return alph_dict, len(alph_dict)
-
-
-def word_ngrams(name, number_of_grams):
-    """
-    The function splits the name into the given amount of chars in 'number_of_grams' and return a vector representation using
-    'create_grams_dict'
-    """
-    alph_dict, vector_size = create_grams_dict(number_of_grams)
-    name = name.lower()
-    # first num is grams second num is grams-1 for split
-    name_split = [name[i:i + number_of_grams] for i in range(len(name) - (number_of_grams - 1))]
-    name_vec = torch.tensor([[0, alph_dict[chars]] for chars in name_split])
-    values = torch.zeros(len(name_vec))
-    s = torch.sparse_coo_tensor(name_vec.t(), values, (1, vector_size))
-    return s, vector_size
-
-
-# convert names to vec representation by using char2vec
-# def name2vec(name,name_letter_split):
-#   name = name.lower()
-#   c2v_model = chars2vec.load_model('eng_50')
-#   word_embeddings = c2v_model.vectorize_words([name])
-#   return word_embeddings.__getitem__(0)
-
-# convert names to vec representation by using addition
-def name2vec_addition(name, name_letter_split):
-    name = name.lower()
-    name = [26] + [ord(c) - ord('a') for c in name] + [27]
-    name = [name[i:i + 2] for i in range(len(name) - 1)]
-    sum_pair = [0, 0]
-    for pair in name:
-        sum_pair[0] += pair[0]
-        sum_pair[1] += pair[1]
-    return sum_pair
 
 
 def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict):
@@ -561,9 +225,13 @@ def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_
 
     if split_method == 'Sparse':
         for triplet in data:
-            data_vectors += [[word2sparse(triplet[0], name_letter_split, gram_frequencies_dict)[0].to(dev),
-                              word2sparse(triplet[1], name_letter_split, gram_frequencies_dict)[0].to(dev),
-                              word2sparse(triplet[2], name_letter_split, gram_frequencies_dict)[0].to(dev)]]
+            vec, dim = name_representation.word2sparse(triplet[0], name_letter_split, gram_frequencies_dict)
+            data_vectors += [[vec.to(dev),
+                              # data_vectors += [[word2sparse(triplet[0], name_letter_split, gram_frequencies_dict)[0].to(dev),
+                              name_representation.word2sparse(triplet[1], name_letter_split, gram_frequencies_dict)[
+                                  0].to(dev),
+                              name_representation.word2sparse(triplet[2], name_letter_split, gram_frequencies_dict)[
+                                  0].to(dev)]]
     # elif split_method == 'name2vec':
     #     for triplet in data:
     #         data_vectors += [[name2vec(triplet[0], name_letter_split).to(dev),
@@ -571,16 +239,16 @@ def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_
     #                           name2vec(triplet[2], name_letter_split).to(dev)]]
     elif split_method == 'word_ngrams':
         for triplet in data:
-            org = word_ngrams(triplet[0], name_letter_split)[0]
-            dim = word_ngrams(triplet[0], name_letter_split)[1]
+            org = name_representation.word_ngrams(triplet[0], name_letter_split)[0]
+            dim = name_representation.word_ngrams(triplet[0], name_letter_split)[1]
             data_vectors += [[org,
-                              word_ngrams(triplet[1], name_letter_split)[0],
-                              word_ngrams(triplet[2], name_letter_split)[0]]]
+                              name_representation.word_ngrams(triplet[1], name_letter_split)[0],
+                              name_representation.word_ngrams(triplet[2], name_letter_split)[0]]]
     else:
         for triplet in data:
-            data_vectors += [[word2dense(triplet[0], name_letter_split)[0].to(dev),
-                              word2dense(triplet[1], name_letter_split)[0].to(dev),
-                              word2dense(triplet[2], name_letter_split)[0].to(dev)]]
+            data_vectors += [[name_representation.word2dense(triplet[0], name_letter_split)[0].to(dev),
+                              name_representation.word2dense(triplet[1], name_letter_split)[0].to(dev),
+                              name_representation.word2dense(triplet[2], name_letter_split)[0].to(dev)]]
     return data_vectors, dim
 
 
@@ -591,61 +259,17 @@ building and training the network
 """
 
 
-class SiameseNetworkDataset(Dataset):
-
-    def __init__(self, data):
-        self.data = data
-
-    def __getitem__(self, index):
-        anch = self.data[index][0]
-        pos = self.data[index][1]
-        neg = self.data[index][2]
-
-        return anch, pos, neg
-
-    def __len__(self):
-        return len(self.data)
-
-
 def create_siamese_dataset(train_data_vectors, train_batch_size):
     """
-    The method creates the siamese dataset and wraps with dataloader to loop through the set rows
+    The method creates the siamese dataset and wraps with dataloader to loop through the set rows in batches
     """
-    siamese_dataset = SiameseNetworkDataset(train_data_vectors)
+    siamese_dataset = siamese_network.SiameseNetworkDataset(train_data_vectors)
     # DataLoaders help arrange the data
     train_dataloader = DataLoader(siamese_dataset,
                                   shuffle=True,
                                   num_workers=0,
                                   batch_size=train_batch_size)
-    # batch_size=Config.train_batch_size)
     return train_dataloader
-
-
-class SiameseNetwork(nn.Module):
-    def __init__(self, embed_dim):
-        super(SiameseNetwork, self).__init__()
-        self._lw1 = torch.nn.parameter.Parameter(torch.randn(embed_dim, 512))  # embed_dim -> 784
-        self._l1 = nn.Linear(embed_dim, 512)
-        self._relu = nn.ReLU(inplace=True)
-        self._l2 = nn.Linear(512, 128)
-        self._l3 = nn.Linear(128, 10)
-
-    def forward_once(self, x):
-        # if you use dense vectors use the row below instead of x.bmm and lw1
-        # x = self._l1(x)
-        b = x.shape[0]
-        x = x.bmm(self._lw1.repeat(b, 1, 1))
-        x = self._relu(x)
-        x = self._l2(x)
-        x = self._relu(x)
-        x = self._l3(x)
-        return x
-
-    def forward(self, input1, input2, input3):
-        output1 = self.forward_once(input1)
-        output2 = self.forward_once(input2)
-        output3 = self.forward_once(input3)
-        return output1.to(dev), output2.to(dev), output3.to(dev)
 
 
 """You can read about *TripletMarginLoss* [here](https://pytorch.org/docs/stable/generated/torch.nn.TripletMarginLoss.html)."""
@@ -660,8 +284,8 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
     """
     Train the network and calculate loss
     """
-    net = SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
-    # if you get "expected double" eror while trying to train the model, add:
+    net = siamese_network.SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
+    # if you get "expected double" error while trying to train the model, add:
     # net = net.double()
     criterion = nn.TripletMarginLoss(margin=0.5)
     optimizer = optim.Adam(net.parameters(), lr=0.0005)
@@ -709,13 +333,17 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
     return net, last_epochs_avg
 
 
-def prepare_data(data):  # Creating DataFrame from the test-data
+def prepare_data(data):
+    """
+    The function creates an anchor, candidate, label row for each row item in the data given
+    """
+    # Creating DataFrame from the test-data
     anch = []
     candidate = []
     labels = []
     # create 2 rows out of each tuple row in the data -->
     # anchor, candidate_pos, positive | anchor, candidate_neg, negative
-    for row in data:  # .itertuples():
+    for row in data:
         # row1
         anch += [row[0]]
         candidate += [row[1]]
@@ -730,7 +358,7 @@ def prepare_data(data):  # Creating DataFrame from the test-data
 
 
 def calculate_distances(test_data_vectors, train_batch_size, net, df):
-    siamese_dataset = SiameseNetworkDataset(test_data_vectors)
+    siamese_dataset = siamese_network.SiameseNetworkDataset(test_data_vectors)
 
     results = []
     dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=train_batch_size, shuffle=False)
@@ -753,14 +381,12 @@ def calculate_distances(test_data_vectors, train_batch_size, net, df):
             dist += [euclidean_distance2.item()]
     # dist
     df['Distance'] = dist
-    # df_test
-    # dist
-    # print(results[0:64])
+
     return results, len(dist)
 
 
-def calculate_accuracy(df, results,
-                       result_decision_distance):  # We use the distances to predict whether two names sound the same (experiment with the distance.. maybe mean)
+def calculate_accuracy(df, results, result_decision_distance):
+    # We use the distances to predict whether two names sound the same (experiment with the distance.. maybe mean)
     actual = []  # the real type of the pair
     net_result = []  # the result from the network
     for r in results:
@@ -839,11 +465,7 @@ def add_config_to_csv(config_tuple, train_scores, test_scores, last_epochs_avg, 
     # Open our existing CSV file in append mode
     # Create a file object for this file
     with open('./Siamese_Parameter_Runs.csv', 'a') as f_object:
-        # Pass this file object to csv.writer()
-        # and get a writer object
         writer_object = writer(f_object)
-        # Pass the list as an argument into
-        # the writerow()
         writer_object.writerow(tup)
         # Close the file object
         f_object.close()
