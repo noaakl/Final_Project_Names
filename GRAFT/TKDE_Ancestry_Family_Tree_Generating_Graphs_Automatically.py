@@ -2606,10 +2606,10 @@ output_path = original_path + "Family_Trees_TKDE/First_Names/"
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 
-# parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
-parental_relation_types = ['Child_Father']
+parental_relation_types = ['Child_Father', 'Child_Grandfather', 'Child_GreatGrandfather']
+# parental_relation_types = ['Child_Father']
 # parental_relation_types = ['Child_Grandfather', 'Child_GreatGrandfather']
-max_edit_distances = [2, 3, 4, 5, 100]
+max_edit_distances = [2, 3, 4, 5, 10]
 # min_chars_counts = [2]
 min_chars_counts = [2, 3]
 min_occurances = [5, 10]
@@ -2647,9 +2647,7 @@ prefix_names = ['Van', 'van',
 dataset_path = original_path + 'Family_Trees_TKDE/'
 
 # target fle should be dump_people_user_full.csv
-# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
-# original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
-original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'short_dump_people_users_100k.csv', delimiter='\t')
+original_wikitree_sf = tc.SFrame.read_csv(dataset_path + 'dump_people_users.csv', delimiter='\t')
 
 results = []
 for target_field_name in tqdm(target_field_names):
@@ -2767,6 +2765,4 @@ sf_x = tc.SFrame(
 sf_x_2 = sf_x.sort(['Edit_Distance_Child_Mother'], ascending=False)
 
 print("finish reading the file")
-print("Done!!")
-
-
+print("Done all")

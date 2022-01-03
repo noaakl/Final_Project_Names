@@ -105,10 +105,9 @@ def create_child_grandfather_grandmother_by_field_name():
     # target fle should be dump_people_user_full.csv
     # wikitree_sf = tc.SFrame.read_csv('/home/aviade/Names_Project/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
     # wikitree_sf = tc.SFrame.read_csv('/Users/noaakless/Desktop/final_project/Names_Students_Project/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
-    wikitree_sf = tc.SFrame.read_csv(
-        '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/short_dump_people_users_100k.csv', delimiter='\t')
-    # '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
-
+    wikitree_sf = tc.SFrame.read_csv('/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/dump_people_users.csv', delimiter='\t')
+    # '/home/user/project_py_3/Family_Trees_TKDE/Family_Trees_TKDE/short_dump_people_users_100k.csv', delimiter='\t')
+    print(wikitree_sf[target_field_name])
     wikitree_sf = wikitree_sf[(wikitree_sf[target_field_name] != None) &
                               (wikitree_sf[target_field_name] != '') &
                               (wikitree_sf[target_field_name] != 'Unknown') &
@@ -758,4 +757,4 @@ sub_graph = g.subgraph(top_200["name"])
 nx.draw(sub_graph, nodelist=list(top_200["name"]), node_size=[v * 10000 for v in list(top_200["closeness_centrality"])],
         with_labels=True)
 
-print("Done!!!")
+print("Done all")
