@@ -79,18 +79,23 @@ def create_sound_features_for_wavs(wav_file_input_path, out_path=None, number=0)
         return None
 
 
+def split_dict(row):
+    print()
+    data1 = tc.SFrame(row['audio']['data'])
+    data1.export_csv("./mis3.csv")
+
 
 def create_knn_classifier(data_path, out_path=None, data_to_test=None):
     print("create_knn_classifier - Start")
     data = tc.SFrame.read_csv(data_path)
     if data_to_test is None:
         data_to_test = data
-        data.export_csv('./RelevantFiles/sound_features_all.csv')
+        data.export_csv('./RelevantFiles/name_sound_features.csv')
         data_names = data.select_columns(['name'])
         data_names.export_csv('./RelevantFiles/name_sound_features_only_names.csv')
     model = tc.nearest_neighbors.create(data, features=['deep_array'])
     # calculate KNN for all names
-    knn = model.query(data_to_test, k=11)
+    knn = model.query(data, k=11)
     # remove yourself
     sf = knn[knn['query_label'] != knn['reference_label']]
     if out_path is not None:
@@ -106,15 +111,14 @@ def extract_sound_features_and_use_knn_to_predict_for_suggestion():
     sound_features = create_sound_features_for_wavs(wav_file_input_path)
     sf = None
     if sound_features is not None:
-        sf = create_knn_classifier('./RelevantFiles/sound_features_all.csv', data_to_test=sound_features)
+        sf = create_knn_classifier('./RelevantFiles/name_sound_features.csv', data_to_test=sound_features)
     return sf
 
 
 def extract_sound_features_and_use_knn_to_predict(out_path):
     print("extract_sound_features_and_use_knn_to_predict - Start")
     # create full data features with batches
-    count = len([f for f in os.listdir('../../Desktop') if f.startswith('wavs') and os.path.isdir(os.path.join(
-        '../../Desktop', f))]) - 1
+    count = len([f for f in os.listdir('.') if f.startswith('wavs') and os.path.isdir(os.path.join('.', f))]) - 1
     if count > 0:
         for number in range(0, count):
             print("wavs {0}".format(number))
@@ -395,7 +399,7 @@ def get_suggestion(name):
         convert_mp3s_to_wavs(wavs_path)
         sf = extract_sound_features_and_use_knn_to_predict_for_suggestion()
         if sf is None:
-            return []
+           return []
         knn_suggestion_with_names = convert_knn_suggestion_indexes_to_names(knn_results_with_indexes_df=sf, name=name)
         knn_suggestions_ranked_by_ed_df = sort_results_by_edit_distance(knn_suggestions_df=knn_suggestion_with_names)
         suggestion_df = remove_suggestions_by_threshold(knn_suggestions_ranked_by_ED_df=knn_suggestions_ranked_by_ed_df)
@@ -418,7 +422,7 @@ def spoken_name_2_vec_full_process():
 
 
 def main():
-    print(get_suggestion("daniellea"))
+    print(get_suggestion("Aaberg"))
     print("Done!!")
 
 
