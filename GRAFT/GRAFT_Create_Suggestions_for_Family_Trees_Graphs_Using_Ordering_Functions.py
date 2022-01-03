@@ -31,7 +31,8 @@ def get_child_gandfather_full_path(target_field_name, min_chars_count, max_edit_
     return full_path
 
 
-def get_child_greatgandfather_full_path(target_field_name, min_chars_count, max_edit_distance, min_occurance, output_path):
+def get_child_greatgandfather_full_path(target_field_name, min_chars_count, max_edit_distance, min_occurance,
+                                        output_path):
     targeted_field_name = target_field_name.replace(" ", "_")
     parental_relation_type = 'Child_GreatGrandfather'
     full_path = output_path + parental_relation_type + "/geq_{0}_chars/ED_1_{1}/wt_{2}_{3}_stacked_no_prefix_ed_geq_{0}_chars_ED_1_{1}_child_ancestors_geq_{4}_occur.csv".format(
@@ -70,7 +71,8 @@ def get_child_ancestors_results_file_name(target_field_name,
     return full_path
 
 
-def create_parental_relation_types_csv(target_field_names, min_chars_counts, max_edit_distances, min_occurances, output_path, parental_relation_types):
+def create_parental_relation_types_csv(target_field_names, min_chars_counts, max_edit_distances, min_occurances,
+                                       output_path, parental_relation_types):
     for target_field_name in target_field_names:
         for min_chars_count in min_chars_counts:
             for max_edit_distance in max_edit_distances:
@@ -81,25 +83,29 @@ def create_parental_relation_types_csv(target_field_names, min_chars_counts, max
                     # print(child_father_full_path)
 
                     child_grandfather_full_path = get_child_gandfather_full_path(target_field_name, min_chars_count,
-                                                                                 max_edit_distance, min_occurance, output_path)
-                    child_grandfather_edges_df = pd.read_csv(child_grandfather_full_path) # TODO: #
+                                                                                 max_edit_distance, min_occurance,
+                                                                                 output_path)
+                    child_grandfather_edges_df = pd.read_csv(child_grandfather_full_path)  # TODO: #
                     # print(noaa)
                     # print(child_grandfather_full_path)
 
                     child_greatgrandfather_full_path = get_child_greatgandfather_full_path(target_field_name,
                                                                                            min_chars_count,
-                                                                                           max_edit_distance, min_occurance, output_path)
-                    child_greatgrandfather_edges_df = pd.read_csv(child_greatgrandfather_full_path) # TODO: #
+                                                                                           max_edit_distance,
+                                                                                           min_occurance, output_path)
+                    child_greatgrandfather_edges_df = pd.read_csv(child_greatgrandfather_full_path)  # TODO: #
                     # print(child_greatgrandfather_full_path)
 
-                    df = pd.concat([child_father_edges_df, child_grandfather_edges_df, child_greatgrandfather_edges_df]) # TODO: #
+                    df = pd.concat(
+                        [child_father_edges_df, child_grandfather_edges_df, child_greatgrandfather_edges_df])  # TODO: #
                     # df = pd.concat([child_father_edges_df])  # TODO: !#
                     updated_df = df.groupby(['Child_Name', 'Ancestor_Name', 'Edit_Distance'])['sum'].sum().reset_index()
                     updated_df = updated_df.sort_values('sum', ascending=False)
 
                     for parental_relation_type in parental_relation_types:
                         all_ancestors_output_path = get_child_ancestors_path(target_field_name, parental_relation_type,
-                                                                             min_chars_count, max_edit_distance, min_occurance, output_path)
+                                                                             min_chars_count, max_edit_distance,
+                                                                             min_occurance, output_path)
                         results_file_name = get_child_ancestors_results_file_name(target_field_name,
                                                                                   parental_relation_type,
                                                                                   min_chars_count,
@@ -108,7 +114,8 @@ def create_parental_relation_types_csv(target_field_names, min_chars_counts, max
                         updated_df.to_csv(all_ancestors_output_path + results_file_name, index=False)
 
 
-def get_full_path(target_field_name, parental_relation_type, min_chars_count, max_edit_distance, min_occurance, output_path):
+def get_full_path(target_field_name, parental_relation_type, min_chars_count, max_edit_distance, min_occurance,
+                  output_path):
     targeted_field_name = target_field_name.replace(" ", "_")
 
     full_path = output_path + parental_relation_type + "/geq_{0}_chars/ED_1_{1}/wt_{2}_{3}_stacked_no_prefix_ed_geq_{0}_chars_ED_1_{1}_child_ancestors_geq_{4}_occur.csv".format(
@@ -207,6 +214,7 @@ class OrderingFunctions:
                 lambda x: rank_candidate(x["Edit_Distance"], x["Order"], x["Shortest_Path"]),
                 axis=1)
 
+            candidates_df = candidates_df.sort_values(by='Order')
             candidates_df = candidates_df.sort_values(by='Rank')
             head_candidates_df = candidates_df.head(10)
             return head_candidates_df
@@ -366,7 +374,8 @@ def get_graph_info(g):
     return node_count, edge_count, avg_in_degree, avg_out_degree
 
 
-def create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, output_path, neighbors_counts, ranking_functions, original_names):
+def create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances,
+                       min_occurances, output_path, neighbors_counts, ranking_functions, original_names):
     name_graph = None
     results = []
     for target_field_name in target_field_names:
@@ -634,7 +643,8 @@ def calculate_recall_at(predictions, source_name_num_of_relevant_synonyms):
     return recall_1, recall_2, recall_3, recall_5, recall_10
 
 
-def prepere_to_calculate_performance(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, ranking_functions, neighbors_counts, ground_truth_df, output_path):
+def prepere_to_calculate_performance(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances,
+                                     min_occurances, ranking_functions, neighbors_counts, ground_truth_df, output_path):
     results = []
     for target_field_name in tqdm(target_field_names):
         for parental_relation_type in tqdm(parental_relation_types):
@@ -645,7 +655,8 @@ def prepere_to_calculate_performance(target_field_names, parental_relation_types
                             for neighbors_count in neighbors_counts:
                                 full_path_suggestions_file = get_full_path_suggestions(target_field_name,
                                                                                        parental_relation_type,
-                                                                                       min_chars_count, max_edit_distance,
+                                                                                       min_chars_count,
+                                                                                       max_edit_distance,
                                                                                        min_occurance, ranking_function,
                                                                                        neighbors_count, output_path)
 
@@ -658,7 +669,8 @@ def prepere_to_calculate_performance(target_field_names, parental_relation_types
                                     suggestions_df, ground_truth_df, ranking_function,
                                     full_path_suggestions_file_no_prefix)
 
-                                calculate_performance(suggestions_with_ground_truth_df, ground_truth_df, ranking_function,
+                                calculate_performance(suggestions_with_ground_truth_df, ground_truth_df,
+                                                      ranking_function,
                                                       full_path_suggestions_file_no_prefix)
 
     # print("Done!")
@@ -721,7 +733,7 @@ def min_ED_of_DM2(name_graph, original_name):
 
 
 def get_suggestion(original_name):
-    # # Create child-all ancestors graph before suggesting
+    original_name = original_name.capitalize()
     target_field_names = ["First Name"]
     output_path = "../Family_Trees_TKDE/Family_Trees_TKDE/V2/First_Names/"
     parental_relation_types = ['Child_Father', 'Child_Grandfather']
@@ -740,7 +752,8 @@ def get_suggestion(original_name):
                          'order_2_and_ED',
                          'min_ED_of_DM',
                          'ED_and_order_and_ED_of_DM']
-    name_graph = create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances, min_occurances, output_path, neighbors_counts, ranking_functions, original_names)
+    name_graph = create_results_csv(target_field_names, parental_relation_types, min_chars_counts, max_edit_distances,
+                                    min_occurances, output_path, neighbors_counts, ranking_functions, original_names)
     head_candidates_df = min_ED_of_DM2(name_graph, original_name)
     return head_candidates_df.head(10)["Candidate"]
 
