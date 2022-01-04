@@ -1,12 +1,16 @@
-from SpokenName2Vec.run_names_project_sound import get_suggestion as spoken
-from Phonetic.phonetic_suggestion import get_suggestion as phonetic
+from nAIme.SpokenName2Vec.run_sound import get_suggestion as spoken
+from nAIme.Phonetic.phonetic_suggestion import get_suggestion as phonetic
+from GRAFT.GRAFT_Create_Suggestions_for_Family_Trees_Graphs_Using_Ordering_Functions import get_suggestion as graft
 
 
 class nAIme:
     def __init__(self): pass
 
-    def SpokenName2Vec(self, name):
+    def spokenname2vec(self, name):
         return spoken(name)
+
+    def graft(self, name):
+        return graft(name)
 
     def soundex(self, name):
         return phonetic(name, 'Soundex')

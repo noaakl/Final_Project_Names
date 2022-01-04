@@ -68,7 +68,7 @@ def extract_sound_features_for_all(out_path):
         os.makedirs("./{0}/sound_features/".format(out_path))
 
     # create full data features with batches
-    count = len([f for f in os.listdir('.') if f.startswith('wavs') and os.path.isdir(os.path.join('.', f))]) - 1
+    count = len([f for f in os.listdir('') if f.startswith('wavs') and os.path.isdir(os.path.join('', f))]) - 1
     if count > 0:
         for number in range(19, count):
             print("wavs {0}".format(number))
@@ -112,7 +112,7 @@ def convert_knn_suggestion_indexes_to_names(out_path=None, knn_results_with_inde
     print("convert_knn_suggestion_indexes_to_names - Start")
     if knn_results_with_indexes_df is None:
         knn_results_with_indexes_df = pd.read_csv("./{0}/knn_results_with_indexes.csv".format(out_path))
-    name_sound_features_df = pd.read_csv("./RelevantFiles/name_sound_features.csv")
+    name_sound_features_df = pd.read_csv("RelevantFiles/name_sound_features.csv")
     results = []
 
     for index, row in knn_results_with_indexes_df.iterrows():
@@ -193,7 +193,7 @@ def top_suggestions(name, suggestion_df=None):
     print("top_suggestions - Start")
     if suggestion_df is None:
         suggestion_df = pd.read_csv(
-            "./RelevantFiles/knn_suggestions_according_sound_only_names_in_ground_truth_threshold_lower_than_1.csv")
+            "RelevantFiles/knn_suggestions_according_sound_only_names_in_ground_truth_threshold_lower_than_1.csv")
     filtered_suggestion_df = suggestion_df[suggestion_df['Original'] == name]
     candidate_list = filtered_suggestion_df['Candidate'].to_list()
     return candidate_list
@@ -202,7 +202,7 @@ def top_suggestions(name, suggestion_df=None):
 def get_suggestion(name):
     wavs_path = './wavs_query'
     name = name.capitalize()
-    names_dataset = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters.csv")
+    names_dataset = pd.read_csv("RelevantFiles/all_distinct_names_length_higher_than_2_characters.csv")
     filtered_names_dataset = names_dataset[names_dataset['Name'] == name]
     if filtered_names_dataset.empty:
         convert_name_to_mp3(name)

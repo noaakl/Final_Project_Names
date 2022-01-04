@@ -33,7 +33,7 @@ def get_suggestion(name, algorithm):
     phonetic_algorithms_dict = {'Soundex': jellyfish.soundex(name), 'Metaphone': jellyfish.metaphone(name),
                                 'Nysiis': jellyfish.nysiis(name), 'Matching_Rating_Codex': jellyfish.match_rating_codex(name)}
     name = name.capitalize()
-    name_phonetic_algorithm_df = pd.read_csv('./RelevantFiles/wt_First_Name_phonetic_algorithm_codes.csv')
+    name_phonetic_algorithm_df = pd.read_csv('RelevantFiles/wt_First_Name_phonetic_algorithm_codes.csv')
     phonetic_algorithm = algorithm
     selected_name_code = phonetic_algorithms_dict[algorithm]
     print(selected_name_code)

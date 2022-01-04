@@ -111,14 +111,14 @@ def extract_sound_features_and_use_knn_to_predict_for_suggestion():
     sound_features = create_sound_features_for_wavs(wav_file_input_path)
     sf = None
     if sound_features is not None:
-        sf = create_knn_classifier('./RelevantFiles/name_sound_features.csv', data_to_test=sound_features)
+        sf = create_knn_classifier('RelevantFiles/name_sound_features.csv', data_to_test=sound_features)
     return sf
 
 
 def extract_sound_features_and_use_knn_to_predict(out_path):
     print("extract_sound_features_and_use_knn_to_predict - Start")
     # create full data features with batches
-    count = len([f for f in os.listdir('.') if f.startswith('wavs') and os.path.isdir(os.path.join('.', f))]) - 1
+    count = len([f for f in os.listdir('') if f.startswith('wavs') and os.path.isdir(os.path.join('', f))]) - 1
     if count > 0:
         for number in range(0, count):
             print("wavs {0}".format(number))
@@ -383,7 +383,7 @@ def top_suggestions(name, suggestion_df=None):
     print("top_suggestions - Start")
     if suggestion_df is None:
         suggestion_df = pd.read_csv(
-            "./RelevantFiles/knn_suggestions_according_sound_only_names_in_ground_truth_threshold_lower_than_1.csv")
+            "RelevantFiles/knn_suggestions_according_sound_only_names_in_ground_truth_threshold_lower_than_1.csv")
     filtered_suggestion_df = suggestion_df[suggestion_df['Original'] == name]
     candidate_list = filtered_suggestion_df['Candidate'].to_list()
     return candidate_list
@@ -392,7 +392,7 @@ def top_suggestions(name, suggestion_df=None):
 def get_suggestion(name):
     wavs_path = './wavs_query'
     name = name.capitalize()
-    names_dataset = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters.csv")
+    names_dataset = pd.read_csv("RelevantFiles/all_distinct_names_length_higher_than_2_characters.csv")
     filtered_names_dataset = names_dataset[names_dataset['Name'] == name]
     if filtered_names_dataset.empty:
         convert_name_to_mp3(name)
