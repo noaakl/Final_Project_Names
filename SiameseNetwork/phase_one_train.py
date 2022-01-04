@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import random
 import csv
-from siamese_network_bgrams_updated import negative
+import siamese_network_bgrams_updated
 
 '''
 Phase to add Negative Examples from competitors
@@ -83,8 +83,8 @@ def create_train_df(methods_df, filtered_df):
 
 
 # TODO: CHECK IF NEEDED
-def helper2():  # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
-    # CHECK IF NEEDED --> ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
+def helper2():
+    # ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
 
     # Samples From ground truth we created from turicreate dataset
     ground_truth_df = pd.read_csv("./spokenName2Vec_ground_truth.csv")
@@ -95,7 +95,7 @@ def helper2():  # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
     negatives = []
     # Creating random negatives
     for i in tqdm(range(len(originals))):
-        negatives += [negative(originals, i)]
+        negatives += [siamese_network_bgrams_updated.negative(originals, i)]
 
     # Updating the ground truth
     ground_truth_df['Negative'] = negatives
@@ -105,9 +105,9 @@ def helper2():  # #!!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
 
 
 # TODO: CHECK IF NEEDED
-def helper():  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED? CHECK
+def helper():
     helper2()
-    # CHECK IF NEEDED --> ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
+    #ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
     with open('./spokenName2Vec_ground_truth.csv', newline='') as f:
         reader = csv.reader(f)
         data = list(reader)
@@ -141,9 +141,9 @@ def train_test_split(train_df):
     return train_data, test_data
 
 
-# TODO: CHECK IF NEEDED - yes..?
-def add_random_negatives(train_df, train_data):  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED?
-    ################check if needed (used to add more random negatives) -> random negative for every unique positive
+# TODO: CHECK IF NEEDED
+def add_random_negatives(train_df, train_data):
+    ## (used to add more random negatives) -> random negative for every unique positive
     # Samples from competitors
     """
     The method adds random 'easy' negative examples to the train data

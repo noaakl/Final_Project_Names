@@ -93,8 +93,8 @@ def main_activation():
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
     competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
     epochs = [10]  # [50,60,70,80,90,100,120]
-    vector_split_type = ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
-    name_letter_split = [1, 2, 3]  # [1,2,3] bgrams
+    vector_split_type = ['nam2vec_fasttext'] # ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
+    name_letter_split = [2]  # [1,2,3] bgrams
     result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
     datasets = ["knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv"]
     gram_frequencies = {}
@@ -144,7 +144,7 @@ def main_activation():
         df_test = prepare_data(test_data)
         test_data_vectors, embedded_dim = create_data_vectors(test_data, vector_split_type, name_letter_split,
                                                               gram_frequencies)
-        save_gram_frequencies_dict(gram_frequencies)
+        # save_gram_frequencies_dict(gram_frequencies)
         test_results, test_size = calculate_distances(test_data_vectors, train_batch_size, net, df_test)
         print("done_test")
         df_test, test_accuracy, test_precision, test_recall, test_majority_same = calculate_accuracy(df_test,
@@ -193,7 +193,6 @@ def filter_names(short_file_path, dataset):
     return filtered_df
 
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!NEEDED?
 # TODO: CHECK IF NEEDED
 # Randomly choosing a negative sample (easy negative examples)
 def negative(originals, index):
@@ -237,6 +236,14 @@ def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_
     #         data_vectors += [[name2vec(triplet[0], name_letter_split).to(dev),
     #                           name2vec(triplet[1], name_letter_split).to(dev),
     #                           name2vec(triplet[2], name_letter_split).to(dev)]]
+    elif split_method == 'nam2vec_fasttext':
+        for triplet in data:
+            org = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[0]
+            dim = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[1]
+            data_vectors += [[org,
+                              name_representation.nam2vec_fasttext(triplet[1], name_letter_split)[0],
+                              name_representation.nam2vec_fasttext(triplet[2], name_letter_split)[0]]]
+
     elif split_method == 'word_ngrams':
         for triplet in data:
             org = name_representation.word_ngrams(triplet[0], name_letter_split)[0]
@@ -302,7 +309,7 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
             negatives = torch.as_tensor(negatives).to(dev)
             anchors, positives = torch.as_tensor(anchors).to(dev), torch.as_tensor(positives).to(dev)
             optimizer.zero_grad()
-            output1, output2, output3 = net(anchors, positives, negatives)
+            output1, output2, output3 = net(anchors, positives, negatives) # forward
             loss_contrastive = criterion(output1, output2, output3)
             loss_contrastive.backward()
             optimizer.step()
@@ -357,11 +364,11 @@ def prepare_data(data):
     return df
 
 
-def calculate_distances(test_data_vectors, train_batch_size, net, df):
-    siamese_dataset = siamese_network.SiameseNetworkDataset(test_data_vectors)
+def calculate_distances(data_vectors, batch_size, net, df):
+    siamese_dataset = siamese_network.SiameseNetworkDataset(data_vectors)
 
     results = []
-    dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=train_batch_size, shuffle=False)
+    dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=batch_size, shuffle=False)
     data_iter = iter(dataloader)
     dist = []
     for i in range(len(dataloader)):
