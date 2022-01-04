@@ -93,8 +93,8 @@ def main_activation():
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
     competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
     epochs = [10]  # [50,60,70,80,90,100,120]
-    vector_split_type = ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
-    name_letter_split = [1, 2, 3]  # [1,2,3] bgrams
+    vector_split_type = ['nam2vec_fasttext'] # ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
+    name_letter_split = [2]  # [1,2,3] bgrams
     result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
     datasets = ["knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv"]
     gram_frequencies = {}
@@ -144,7 +144,7 @@ def main_activation():
         df_test = prepare_data(test_data)
         test_data_vectors, embedded_dim = create_data_vectors(test_data, vector_split_type, name_letter_split,
                                                               gram_frequencies)
-        save_gram_frequencies_dict(gram_frequencies)
+        # save_gram_frequencies_dict(gram_frequencies)
         test_results, test_size = calculate_distances(test_data_vectors, train_batch_size, net, df_test)
         print("done_test")
         df_test, test_accuracy, test_precision, test_recall, test_majority_same = calculate_accuracy(df_test,

@@ -2,7 +2,7 @@ import pandas as pd
 from tqdm import tqdm
 import random
 import csv
-from siamese_network_bgrams_updated import negative
+import siamese_network_bgrams_updated
 
 '''
 Phase to add Negative Examples from competitors
@@ -95,7 +95,7 @@ def helper2():
     negatives = []
     # Creating random negatives
     for i in tqdm(range(len(originals))):
-        negatives += [negative(originals, i)]
+        negatives += [siamese_network_bgrams_updated.negative(originals, i)]
 
     # Updating the ground truth
     ground_truth_df['Negative'] = negatives

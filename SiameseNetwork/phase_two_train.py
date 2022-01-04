@@ -1,6 +1,6 @@
 import pandas as pd
 import random
-from siamese_network_bgrams_updated import negative
+import siamese_network_bgrams_updated
 
 '''
 Phase to add Negative Examples from methods of name representation as vectors (can switch with larger file later)
@@ -61,7 +61,7 @@ def add_random_negatives_phase_two(unique_df):
     trios = []
     for i, org in enumerate(originals):
         trios += [[org, positives[i], negatives[i]]]
-        random_negative = negative(originals, i)
+        random_negative = siamese_network_bgrams_updated.negative(originals, i)
         trios += [[originals[i], positives[i], random_negative]]
 
     random.shuffle(trios)
