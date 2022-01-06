@@ -4,9 +4,9 @@ import turicreate as tc
 from tqdm import tqdm
 import pandas as pd
 import editdistance
-from sklearn.metrics import precision_score, accuracy_score, recall_score, precision_recall_fscore_support, f1_score
+from sklearn.metrics import precision_score, accuracy_score, f1_score
 from name2mp3 import convert_name_to_mp3
-from splitDir import split_dir
+from nAIme.SpokenName2Vec.splitDir import split_dir
 
 __author__ = "Aviad Elyashar"
 

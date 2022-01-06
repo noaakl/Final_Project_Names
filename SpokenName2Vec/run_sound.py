@@ -4,16 +4,9 @@ import pandas as pd
 from pyAudioAnalysis import MidTermFeatures as mtf
 from tqdm import tqdm
 #from splitDir import split_dir
-from nAIme.SpokenName2Vec.name2mp3 import convert_name_to_mp3
 import turicreate as tc
 import editdistance
-from nAIme.SpokenName2Vec import RelevantFiles
-import importlib_resources as pkg_resources
-import zipfile
-from pathlib import Path
-from pyunpack import Archive
-from py7zr import unpack_7zarchive
-import shutil
+
 
 __author__ = "Aviad Elyashar"
 
@@ -21,6 +14,7 @@ __author__ = "Aviad Elyashar"
 def calculate_edit_distance(name1, name2):
     if not name1 or not name2:
         return -1
+
     name1 = name1.lower()
     name2 = name2.lower()
 
@@ -190,12 +184,10 @@ def sort_results_by_edit_distance(knn_suggestions_df=None, out_path=None):
     if knn_suggestions_df is None:
         knn_suggestions_sf = tc.SFrame.read_csv('./{0}/knn_suggestions_according_sound_pandas_imp.csv'.format(out_path))
     else:
-        knn_suggestions_sf = tc.SFrame.read_csv('./res.csv')
-    knn_suggestions_df['Edit_Distance'] = knn_suggestions_df.apply(lambda x: calculate_edit_distance(x.Original, x.Candidate), axis=1)
-    print(knn_suggestions_df)
-    knn_suggestions_sf = tc.SFrame(data=knn_suggestions_df)
-    #knn_suggestions_sf = knn_suggestions_sf.remove_column('X1')
-    #knn_suggestions_sf['Edit_Distance'] = knn_suggestions_sf.apply(lambda x: calculate_edit_distance(x["Original"], x["Candidate"]))
+        knn_suggestions_sf = tc.SFrame(data=knn_suggestions_df)
+    print(knn_suggestions_sf)
+    knn_suggestions_sf['Edit_Distance'] = knn_suggestions_sf.apply(
+        lambda x: calculate_edit_distance(x["Original"], x["Candidate"]))
     knn_suggestions_sf_by_edit_distance_sf = knn_suggestions_sf.sort(['Original', 'Edit_Distance'], ascending=True)
     if out_path is not None:
         knn_suggestions_sf_by_edit_distance_sf.export_csv("./{0}/knn_suggestions_according_sound"
@@ -219,17 +211,17 @@ def top_suggestions(name, suggestion_df=None):
 
 
 def get_suggestion(name):
-    with pkg_resources.path(RelevantFiles, "RelevantFiles.7z") as p:
-        package_path = p
-    pth = Path(package_path)
-    pth_dir = pth.parent
-    pth = str(pth)
-    #Archive(package_path).extractall(pth)
-    all_files = os.listdir(pth_dir)
-    csv_files = list(filter(lambda f: f.endswith('.csv'), all_files))
-    if len(csv_files) == 0:
-        shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
-        shutil.unpack_archive(pth, pth_dir)
+    # with pkg_resources.path(RelevantFiles, "RelevantFiles.7z") as p:
+    #     package_path = p
+    # pth = Path(package_path)
+    # pth_dir = pth.parent
+    # pth = str(pth)
+    # #Archive(package_path).extractall(pth)
+    # all_files = os.listdir(pth_dir)
+    # csv_files = list(filter(lambda f: f.endswith('.csv'), all_files))
+    # if len(csv_files) == 0:
+    #     shutil.register_unpack_format('7zip', ['.7z'], unpack_7zarchive)
+    #     shutil.unpack_archive(pth, pth_dir)
 
     wavs_path = './wavs_query'
     name = name.capitalize()
@@ -244,7 +236,7 @@ def get_suggestion(name):
         df = extract_sound_features_for_suggestion(name)
         knn = create_knn_classifier(data_to_test=df, name=name)
         knn_with_names = convert_knn_suggestion_indexes_to_names(knn_results_with_indexes_df=knn, name=name)
-        knn_with_names.to_csv("./res.csv")
+        print(knn_with_names)
         df_sorted = sort_results_by_edit_distance(knn_suggestions_df=knn_with_names)
         df = remove_suggestions_by_threshold(knn_suggestions_ranked_by_ED_df=df_sorted)
         return top_suggestions(name, df)

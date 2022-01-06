@@ -4,6 +4,8 @@ import pandas as pd
 from gtts import gTTS
 import time
 import requests
+from nAIme.SpokenName2Vec import RelevantFiles
+import importlib_resources as pkg_resources
 
 
 def count_down_time(seconds_to_wait):
@@ -31,7 +33,10 @@ def convert_name_to_mp3(name=None):
     if name is not None:
         all_names = [name]
     else:
-        names_df = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters1.csv")
+        with pkg_resources.path(RelevantFiles, "all_distinct_names_length_higher_than_2_characters1.csv") as p:
+            package_path = p
+        names_df = pd.read_csv(package_path)
+        #names_df = pd.read_csv("./RelevantFiles/all_distinct_names_length_higher_than_2_characters1.csv")
         all_names = names_df["Name"].tolist()
         all_names = sorted(all_names)
 
