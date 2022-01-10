@@ -12,8 +12,8 @@ Our nAime project contains:
 - install fsmpeg on your computer
 - upgrade pip
 - run `pip install nAIme`
-- import name.get_suggestion
-- now you can use any of the package's functions. for example: nAIme.get_suggestion.spokenname2vec('Anny')
+- import `name.get_suggestion`
+- now you can use any of the package's functions. for example: `nAIme.get_suggestion.spokenname2vec('Anny')`
 
 ##
 
