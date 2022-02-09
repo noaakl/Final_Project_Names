@@ -2,12 +2,23 @@ import pandas as pd
 from tqdm import tqdm
 import random
 import csv
-import siamese_network_bgrams_updated
 
 '''
 Phase to add Negative Examples from competitors
 '''
 
+def negative(originals, index):
+    neg = "None"
+    # Each name might be in the dataset 10 times in a row (at most)
+    if index <= 9:
+        neg = originals[random.randint(10, len(originals) - 1)]
+    elif index >= len(originals) - 10:
+        neg = originals[random.randint(0, len(originals) - 10)]
+    else:
+        above = originals[random.randint(0, index - 10)]
+        below = originals[random.randint(index + 10, len(originals) - 1)]
+        neg = random.choice([above, below])
+    return neg
 
 def first_phase_negative_examples(long_file_path, competitor_dataset):
     """
@@ -95,7 +106,7 @@ def helper2():
     negatives = []
     # Creating random negatives
     for i in tqdm(range(len(originals))):
-        negatives += [siamese_network_bgrams_updated.negative(originals, i)]
+        negatives += [negative(originals, i)]
 
     # Updating the ground truth
     ground_truth_df['Negative'] = negatives

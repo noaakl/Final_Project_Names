@@ -1,10 +1,24 @@
 import pandas as pd
 import random
-import siamese_network_bgrams_updated
+
 
 '''
 Phase to add Negative Examples from methods of name representation as vectors (can switch with larger file later)
 '''
+
+
+def negative(originals, index):
+    neg = "None"
+    # Each name might be in the dataset 10 times in a row (at most)
+    if index <= 9:
+        neg = originals[random.randint(10, len(originals) - 1)]
+    elif index >= len(originals) - 10:
+        neg = originals[random.randint(0, len(originals) - 10)]
+    else:
+        above = originals[random.randint(0, index - 10)]
+        below = originals[random.randint(index + 10, len(originals) - 1)]
+        neg = random.choice([above, below])
+    return neg
 
 
 def second_phase_negative_examples(short_file_path, dataset, filtered_df):
@@ -61,7 +75,7 @@ def add_random_negatives_phase_two(unique_df):
     trios = []
     for i, org in enumerate(originals):
         trios += [[org, positives[i], negatives[i]]]
-        random_negative = siamese_network_bgrams_updated.negative(originals, i)
+        random_negative = negative(originals, i)
         trios += [[originals[i], positives[i], random_negative]]
 
     random.shuffle(trios)

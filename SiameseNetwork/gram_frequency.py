@@ -42,38 +42,37 @@ def sort_by_grams(grams_dict):
             dict[key] += value
 
 
-gram_frequencies3 = upload_gram_frequencies_dict3()
-# print(gram_frequencies3)
-sort_by_grams(gram_frequencies3)
-# # sort grams by number of appearances
-# grams_1 = sorted(one_gram_dict.items(), key=lambda k: k[1], reverse=True)
-# grams_2 = sorted(two_gram_dict.items(), key=lambda k: k[1], reverse=True)
-grams_3 = sorted(three_gram_dict.items(), key=lambda k: k[1], reverse=True)
-# #
-# print(grams_1)
+# gram_frequencies2 = upload_gram_frequencies_dict2()
+# # print(gram_frequencies3)
+# sort_by_grams(gram_frequencies2)
+# # # sort grams by number of appearances
+# # grams_1 = sorted(one_gram_dict.items(), key=lambda k: k[1], reverse=True)
+# grams_2 = sorted(two_gram_dict, key=lambda k: two_gram_dict[k], reverse=True)
+# # grams_3 = sorted(three_gram_dict.items(), key=lambda k: k[1], reverse=True)
+# # #
+# # print(grams_1)
+# # print(grams_2)
 # print(grams_2)
-print(grams_3)
+# #
+# # x1, y1 = zip(*grams_1)  # unpack a list of pairs into two tuples
+# # x2, y2 = zip(*grams_2)  # unpack a list of pairs into two tuples
+# # x3, y3 = zip(*grams_2)  # unpack a list of pairs into two tuples
 #
-# x1, y1 = zip(*grams_1)  # unpack a list of pairs into two tuples
-# x2, y2 = zip(*grams_2)  # unpack a list of pairs into two tuples
-x3, y3 = zip(*grams_3)  # unpack a list of pairs into two tuples
-
-# print(x1)
-# print(y1)
-from csv import writer
-#
-with open('./grams3.csv', 'a') as f_object:
-    # Pass this file object to csv.writer()
-    # and get a writer object
-    writer_object = writer(f_object)
-    # for word in y1:
-    #     writer_object.writerow([word])
-    # Pass the list as an argument into
-    # the writerow()
-    writer_object.writerow(x3)
-    writer_object.writerow(y3)
-    # Close the file object
-    f_object.close()
+# # print(x1)
+# # print(y1)
+# from csv import writer
+# # #
+# with open('./top_grams2.csv', 'a') as f_object:
+#     # Pass this file object to csv.writer()
+#     # and get a writer object
+#     writer_object = writer(f_object)
+#     # for word in y1:
+#     #     writer_object.writerow([word])
+#     # Pass the list as an argument into
+#     # the writerow()
+#     writer_object.writerow(grams_2)
+#     # Close the file object
+#     f_object.close()
 
 # plt.xlabel("Gram")
 # plt.ylabel("Frequency")
@@ -114,3 +113,12 @@ with open('./grams3.csv', 'a') as f_object:
 # print(word2sparse('hila',1))
 # print(word2sparse('hila',2))
 # print(word2sparse('hila',3))
+
+import pandas as pd
+top_grams2_csv = pd.read_csv("top_grams2.csv").columns
+
+f = top_grams2_csv[:50]
+name_rep = [0] * 50
+print(name_rep)
+print(len(f))
+print(len(name_rep))

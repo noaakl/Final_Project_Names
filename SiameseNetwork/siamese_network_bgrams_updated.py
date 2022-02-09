@@ -93,13 +93,21 @@ def main_activation():
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
     competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
     epochs = [10]  # [50,60,70,80,90,100,120]
-    vector_split_type = ['nam2vec_fasttext'] # ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
+    vector_split_type = ['word2top_grams']#['nam2vec_fasttext'] # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
     name_letter_split = [2]  # [1,2,3] bgrams
     result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
     datasets = ["knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv"]
+    # dim parameters
+    hidden_dim_one = [512]
+    hidden_dim_two = [128]
+    out_dim = [10]
+    top_grams_amount = [10,50,100]
+
     gram_frequencies = {}
+    # config = [epochs, vector_split_type, name_letter_split, result_decision_distance,
+    #           datasets, train_batch_size, competitor_dataset]
     config = [epochs, vector_split_type, name_letter_split, result_decision_distance,
-              datasets, train_batch_size, competitor_dataset]
+              datasets, train_batch_size, competitor_dataset,hidden_dim_one, hidden_dim_two,out_dim,top_grams_amount]
     for config_tuple in list(itertools.product(*config)):
         # activate all functions
         # dev = activate_GPU()
@@ -111,8 +119,19 @@ def main_activation():
         datasets = config_tuple[4]
         train_batch_size = config_tuple[5]
         competitor_dataset = config_tuple[6]
+        # dims parameters for the network architecture
+        # TODO: change back after top grams trial
+        # hidden_dim_one = config_tuple[7]
+        # hidden_dim_two = config_tuple[8]
+        # out_dim = config_tuple[9]
+        dims = [hidden_dim_one,hidden_dim_two,out_dim]
+        top_grams_amount = config_tuple[10]
+        hidden_dim_one = int(top_grams_amount * 0.8)
+        hidden_dim_two = int(top_grams_amount * 0.5)
+        out_dim = int(top_grams_amount * 0.2)
 
         filtered_df = filter_names(short_file_path, datasets)  # filter names and save df to file
+
         # first phase train examples
         methods_df = phase_one_train.first_phase_negative_examples(long_file_path, competitor_dataset)
         train_df = phase_one_train.create_train_df(methods_df, filtered_df)
@@ -127,12 +146,12 @@ def main_activation():
 
         # create and train the net
         train_data_vectors, embedded_dim = create_data_vectors(train_data, vector_split_type, name_letter_split,
-                                                               gram_frequencies)
+                                                               gram_frequencies, top_grams_amount)
         train_dataloader = create_siamese_dataset(train_data_vectors, train_batch_size)
-        net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim)
+        net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim, dims)
         print("done_train")
         df_train = prepare_data(train_data)
-        # df_train -- anch, pos, label | anch, neg, dist
+        # df_train -- anch, pos, label | anch, neg, label
         train_results, train_size = calculate_distances(train_data_vectors, train_batch_size, net, df_train)
         # df_train -- anch, pos, label, dist | anch, neg, label, dist
         df_train, train_accuracy, train_precision, train_recall, train_majority_same = calculate_accuracy(df_train,
@@ -143,7 +162,7 @@ def main_activation():
                         1 - train_majority_same]
         df_test = prepare_data(test_data)
         test_data_vectors, embedded_dim = create_data_vectors(test_data, vector_split_type, name_letter_split,
-                                                              gram_frequencies)
+                                                              gram_frequencies , top_grams_amount)
         # save_gram_frequencies_dict(gram_frequencies)
         test_results, test_size = calculate_distances(test_data_vectors, train_batch_size, net, df_test)
         print("done_test")
@@ -166,6 +185,17 @@ def save_gram_frequencies_dict(gram_frequencies):
 def filter_rows_by_values(df, col, values):
     return df[~df[col].isin(values)]
 
+def save_all(names):
+    for name in names:
+        try:
+          with open("./fasttext_vecs/"+name+".pkl", 'rb') as f:
+              word_vec = pickle.load(f)
+        except:
+          print("fell")
+          with open('missing_names_old2.csv', 'a') as f_object:
+            writer_object = writer(f_object, delimiter =' ')
+            writer_object.writerow(name)
+            f_object.close()
 
 def filter_names(short_file_path, dataset):
     """
@@ -218,7 +248,7 @@ Second method to create the train-data.
 """
 
 
-def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict):
+def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict, top_grams_amount = 0):
     data_vectors = []
     dim = 28 ** 2
 
@@ -236,13 +266,20 @@ def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_
     #         data_vectors += [[name2vec(triplet[0], name_letter_split).to(dev),
     #                           name2vec(triplet[1], name_letter_split).to(dev),
     #                           name2vec(triplet[2], name_letter_split).to(dev)]]
-    elif split_method == 'nam2vec_fasttext':
+    elif split_method == 'nam2vec_fasttext': #old version
         for triplet in data:
             org = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[0]
             dim = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[1]
+            if dim>0:
+                data_vectors += [[org,
+                                  name_representation.nam2vec_fasttext(triplet[1], name_letter_split)[0],
+                                  name_representation.nam2vec_fasttext(triplet[2], name_letter_split)[0]]]
+    elif split_method == 'word2top_grams':
+        for triplet in data:
+            org, dim = name_representation.word2top_grams(triplet[0], name_letter_split, top_grams_amount)
             data_vectors += [[org,
-                              name_representation.nam2vec_fasttext(triplet[1], name_letter_split)[0],
-                              name_representation.nam2vec_fasttext(triplet[2], name_letter_split)[0]]]
+                              name_representation.word2top_grams(triplet[1], name_letter_split, top_grams_amount)[0],
+                              name_representation.word2top_grams(triplet[2], name_letter_split,top_grams_amount)[0]]]
 
     elif split_method == 'word_ngrams':
         for triplet in data:
@@ -287,11 +324,13 @@ def show_plot(iteration, loss):
     plt.show()
 
 
-def train_network(train_dataloader, train_number_epochs, embedded_dim):
+# def train_network(train_dataloader, train_number_epochs, embedded_dim):
+def train_network(train_dataloader, train_number_epochs, embedded_dim, hidden_dims ): #dims_list
     """
     Train the network and calculate loss
     """
-    net = siamese_network.SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
+    # net = siamese_network.SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
+    net = siamese_network.SiameseNetwork(embedded_dim,hidden_dims[0],hidden_dims[1], hidden_dims[2]).to(dev)  # embedded_dim = 28 ** 2
     # if you get "expected double" error while trying to train the model, add:
     # net = net.double()
     criterion = nn.TripletMarginLoss(margin=0.5)

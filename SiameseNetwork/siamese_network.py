@@ -22,13 +22,13 @@ class SiameseNetworkDataset(Dataset):
 
 
 class SiameseNetwork(nn.Module):
-    def __init__(self, embed_dim):
+    def __init__(self, embed_dim, hidden_dim1, hidden_dim2, output_dim):
         super(SiameseNetwork, self).__init__()
-        self._lw1 = torch.nn.parameter.Parameter(torch.randn(embed_dim, 512))  # embed_dim -> 784
-        self._l1 = nn.Linear(embed_dim, 512)
+        self._lw1 = torch.nn.parameter.Parameter(torch.randn(embed_dim, hidden_dim1))  # embed_dim -> 784,512
+        self._l1 = nn.Linear(embed_dim, hidden_dim1) # old: (embed_dim, 512)
         self._relu = nn.ReLU(inplace=True)
-        self._l2 = nn.Linear(512, 128)
-        self._l3 = nn.Linear(128, 10)
+        self._l2 = nn.Linear(hidden_dim1, hidden_dim2) # old: (512, 128)
+        self._l3 = nn.Linear(hidden_dim2, output_dim) # old: (128, 10)
 
     def forward_once(self, x):
         # if you use dense vectors use the row below instead of x.bmm and lw1
