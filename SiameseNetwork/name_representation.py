@@ -141,7 +141,7 @@ def nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
     representing the given word
     """
     try:
-        with open("./fasttext_vecs/" + name + ".pkl", 'rb') as f:
+        with open("./missing_fasttext_vecs/" + name + ".pkl", 'rb') as f:
             word_vec = pickle.load(f)
         # vec = torch.tensor(word_vec)
         vec = torch.tensor(np.array([word_vec]))
@@ -167,9 +167,9 @@ def save_nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
 
 def word2top_grams(name, name_letter_split, top_grams_amount):
     '''
-    The function creates a vector as type of bag of words where in each coordinate the fequency is placed
+    The function creates a vector as type of bag of words where in each coordinate the frequency is placed
     representing the amount of the value in its place
-    The representation is for 'top_grams_amount' top grams only
+    The representation is for 'top_grams_amount' top grams only (2 grams)
     '''
     top_grams2_csv = pd.read_csv("./top_grams2.csv").columns
     name = name.lower()
@@ -183,5 +183,41 @@ def word2top_grams(name, name_letter_split, top_grams_amount):
             placement = -1
         if placement != -1:
             name_rep[placement] += 1
-    name_vec = torch.tensor([name_rep])
+
+    # torch.tensor([[0, rep] for rep in name_rep if rep>0])
+
+    name_vec = torch.tensor([name_rep], dtype=torch.int64)
+    # name_vec = torch.sparse_coo_tensor(name_vec.t(), values, (1, top_grams_amount))
+    # name_vec = torch.tensor(np.array([name_rep]))
     return name_vec, top_grams_amount
+
+
+def word2all_top_grams(name, top_grams_amount, grams_path):
+    '''
+    The function creates a vector as type of bag of words where in each coordinate the frequency is placed
+    representing the amount of the value in its place
+    The representation is for 'top_grams_amount' top grams only (1,2 & 3)
+    '''
+    top_grams_csv = pd.read_csv("./"+grams_path+".csv").columns
+    name = name.lower()
+    top_grams_lst = list(top_grams_csv[:top_grams_amount])
+    name_rep = [0] * top_grams_amount
+    name_split = []
+    for j in range(1,4):
+        name_split += [name[i:i + j] for i in range(len(name) - (j - 1))]
+    for char in name_split:
+        try:
+            placement = top_grams_lst.index(char)
+        except:  # gram does not exist in top grams
+            placement = -1
+        if placement != -1:
+            name_rep[placement] += 1
+    name_vec = torch.tensor(np.array([name_rep]))
+    return name_vec, top_grams_amount
+
+
+# print(word2sparse('hila',2))
+tens = word2top_grams("Hila",2,170)[0]
+print(tens)
+print(word2sparse('hila',2))
+# print(nam2vec_fasttext("Aemilia"))

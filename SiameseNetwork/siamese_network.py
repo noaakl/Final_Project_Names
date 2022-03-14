@@ -42,6 +42,10 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward(self, input1, input2, input3):
+        # expects tensor of type Float
+        # input1 = input1.type(torch.FloatTensor)
+        # input2 = input2.type(torch.FloatTensor)
+        # input3 = input3.type(torch.FloatTensor)
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
         output3 = self.forward_once(input3)
