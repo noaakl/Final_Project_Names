@@ -1,8 +1,13 @@
 import string
+
+import numpy as np
 import torch
 import itertools
 import random
-import fasttext
+# import fasttext
+import pickle
+import pandas as pd
+from _csv import writer
 
 """**Creating Vectors**
 
@@ -32,7 +37,7 @@ def calculate_gram_frequency(dict, name_split):
 
 
 # Convert names to sparse
-def word2sparse(name, name_letter_split, gram_frequencies_dict = {}):
+def word2sparse(name, name_letter_split, gram_frequencies_dict={}):
     '''
     The function creates a vector as type of bag of words where in each coordinate a 1 is place representing
     its existence of the value
@@ -42,7 +47,7 @@ def word2sparse(name, name_letter_split, gram_frequencies_dict = {}):
     name = name.lower()
     # name_split = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
     # calculate_gram_frequency(gram_frequencies_dict, name_split)
-    name = [26] + [ord(c) - ord('a') for c in name] + [27] # start + end (26 letters)
+    name = [26] + [ord(c) - ord('a') for c in name] + [27]  # start + end (26 letters)
     name = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
     nameidx = None
     if name_letter_split == 1:
@@ -54,7 +59,7 @@ def word2sparse(name, name_letter_split, gram_frequencies_dict = {}):
     values = torch.ones(len(name))
     s = torch.sparse_coo_tensor(nameidx.t(), values, (1, 28 ** name_letter_split))
     # nnz -> how many are filled , tensor dimensions
-    return s, 28 ** name_letter_split # 28 ** 2
+    return s, 28 ** name_letter_split  # 28 ** 2
 
 
 # Convert names to dense
@@ -74,7 +79,7 @@ def create_grams_dict(number_of_grams):
     The function creates a gram dictionary using the number_of_grams input given in order to create a representation
     for the letter combinations
     """
-    alphabet = list(string.ascii_lowercase) # + ['<'] + ['>'] # alphabet & start + end chars
+    alphabet = list(string.ascii_lowercase)  # + ['<'] + ['>'] # alphabet & start + end chars
     if number_of_grams == 1:
         alph_dict = dict((alphabet[indx], indx) for indx in range(len(alphabet)))
     else:
@@ -121,11 +126,98 @@ def name2vec_addition(name, name_letter_split):
     return sum_pair
 
 
-def nam2vec_fasttext(name, name_letter_split = 2):
+# def nam2vec_fasttext(name, name_letter_split = 2):
+#     """
+#     The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
+#     representing the given word
+#     """
+#     model = fasttext.load_model("name2vec_model.bin")
+#     word_vec = torch.Tensor(model.get_word_vector(name))
+#     return word_vec, len(word_vec)
+
+def nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
     """
     The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
     representing the given word
     """
-    model = fasttext.load_model("name2vec_model.bin")
-    word_vec = torch.Tensor(model.get_word_vector(name))
-    return word_vec, len(word_vec)
+    try:
+        with open("./missing_fasttext_vecs/" + name + ".pkl", 'rb') as f:
+            word_vec = pickle.load(f)
+        # vec = torch.tensor(word_vec)
+        vec = torch.tensor(np.array([word_vec]))
+
+    except: # write the names in the missing names file to save vector representation
+        with open('./missing_names.csv', 'a') as f_object:
+            writer_object = writer(f_object, delimiter=' ')
+            writer_object.writerow(name)
+            f_object.close()
+        return name, 0
+
+    return vec, len(word_vec)
+
+
+def save_nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
+    """
+    The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
+    representing the given word
+    """
+    with open(name + '.pkl', 'wb') as f:
+        pickle.dump(name, f)
+
+
+def word2top_grams(name, name_letter_split, top_grams_amount):
+    '''
+    The function creates a vector as type of bag of words where in each coordinate the frequency is placed
+    representing the amount of the value in its place
+    The representation is for 'top_grams_amount' top grams only (2 grams)
+    '''
+    top_grams2_csv = pd.read_csv("./top_grams2.csv").columns
+    name = name.lower()
+    top_grams_lst = list(top_grams2_csv[:top_grams_amount])
+    name_rep = [0] * top_grams_amount
+    name_split = [name[i:i + name_letter_split] for i in range(len(name) - (name_letter_split - 1))]
+    for char in name_split:
+        try:
+            placement = top_grams_lst.index(char)
+        except:  # gram does not exist in top grams
+            placement = -1
+        if placement != -1:
+            name_rep[placement] += 1
+
+    # torch.tensor([[0, rep] for rep in name_rep if rep>0])
+
+    name_vec = torch.tensor([name_rep], dtype=torch.int64)
+    # name_vec = torch.sparse_coo_tensor(name_vec.t(), values, (1, top_grams_amount))
+    # name_vec = torch.tensor(np.array([name_rep]))
+    return name_vec, top_grams_amount
+
+
+def word2all_top_grams(name, top_grams_amount, grams_path):
+    '''
+    The function creates a vector as type of bag of words where in each coordinate the frequency is placed
+    representing the amount of the value in its place
+    The representation is for 'top_grams_amount' top grams only (1,2 & 3)
+    '''
+    top_grams_csv = pd.read_csv("./"+grams_path+".csv").columns
+    name = name.lower()
+    top_grams_lst = list(top_grams_csv[:top_grams_amount])
+    name_rep = [0] * top_grams_amount
+    name_split = []
+    for j in range(1,4):
+        name_split += [name[i:i + j] for i in range(len(name) - (j - 1))]
+    for char in name_split:
+        try:
+            placement = top_grams_lst.index(char)
+        except:  # gram does not exist in top grams
+            placement = -1
+        if placement != -1:
+            name_rep[placement] += 1
+    name_vec = torch.tensor(np.array([name_rep]))
+    return name_vec, top_grams_amount
+
+
+# print(word2sparse('hila',2))
+tens = word2top_grams("Hila",2,170)[0]
+print(tens)
+print(word2sparse('hila',2))
+# print(nam2vec_fasttext("Aemilia"))

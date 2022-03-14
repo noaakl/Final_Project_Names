@@ -37,6 +37,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
 from sklearn import metrics
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 from sklearn import preprocessing
 import pandas as pd
 from torchtext.data.utils import get_tokenizer
@@ -61,6 +62,7 @@ import siamese_network
 
 # import chars2vec
 # split reference https://towardsdatascience.com/from-words-to-vectors-e24f0977193e
+distances = 4
 
 # concat the split files from competitor results
 concat_files = False
@@ -88,18 +90,31 @@ def main_activation():
     # long_file_path = 'drive/MyDrive/Siamese Network Names/Datasets/Phonetic_Encoding_Suggestions/'
     short_file_path = './Datasets/'
     long_file_path = './Datasets/Phonetic_Encoding_Suggestions/'
-
+    gt_file_path = './Siamese_Datasets/ground_truth_constructed_based_on_all_first_names_behindthename_filtered_wt_V2.csv'
+    neg_file_path = './Siamese_Datasets/Competitor_Results/negative_example_names.csv'
+    gt_df = pd.read_csv(gt_file_path)
+    neg_df = pd.read_csv(neg_file_path)
+    neg_df = neg_df[['Original', 'Candidate']]
     # Parameter combinations for the network train ('configs')
     train_batch_size = [64]  # [52, 58, 64, 70, 76, 82]
     competitor_dataset = [True]  # [True,False] # true -> 2 versions , false -> new datasets only
     epochs = [10]  # [50,60,70,80,90,100,120]
-    vector_split_type = ['nam2vec_fasttext'] # ['Sparse']  # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
+    vector_split_type = ['Sparse']  # ['nam2vec_fasttext'] # ['word_ngrams']  # ,'name2vec']#['Sparse','Dense']
     name_letter_split = [2]  # [1,2,3] bgrams
-    result_decision_distance = [6]  # [3, 4, 5, 6, 7, 8]
+    result_decision_distance = [4, 5, 6, 7]
     datasets = ["knn_suggestions_according_sound_pandas_imp_sorted_by_ed.csv"]
+    # dim parameters
+    hidden_dim_one = [512]
+    hidden_dim_two = [128]
+    out_dim = [10]
+    # top_grams_amount = [10, 50, 100]
+
     gram_frequencies = {}
+    # config = [epochs, vector_split_type, name_letter_split, result_decision_distance,
+    #           datasets, train_batch_size, competitor_dataset]
     config = [epochs, vector_split_type, name_letter_split, result_decision_distance,
-              datasets, train_batch_size, competitor_dataset]
+              datasets, train_batch_size, competitor_dataset, hidden_dim_one, hidden_dim_two,
+              out_dim]  # , top_grams_amount]
     for config_tuple in list(itertools.product(*config)):
         # activate all functions
         # dev = activate_GPU()
@@ -111,8 +126,18 @@ def main_activation():
         datasets = config_tuple[4]
         train_batch_size = config_tuple[5]
         competitor_dataset = config_tuple[6]
-
+        # dims parameters for the network architecture
+        # TODO: change back after top grams trial
+        hidden_dim_one = config_tuple[7]
+        hidden_dim_two = config_tuple[8]
+        out_dim = config_tuple[9]
+        dims = [hidden_dim_one, hidden_dim_two, out_dim]
+        # top_grams_amount = config_tuple[10]
+        # hidden_dim_one = int(top_grams_amount * 0.8)
+        # hidden_dim_two = int(top_grams_amount * 0.5)
+        # out_dim = int(top_grams_amount * 0.2)
         filtered_df = filter_names(short_file_path, datasets)  # filter names and save df to file
+
         # first phase train examples
         methods_df = phase_one_train.first_phase_negative_examples(long_file_path, competitor_dataset)
         train_df = phase_one_train.create_train_df(methods_df, filtered_df)
@@ -127,35 +152,70 @@ def main_activation():
 
         # create and train the net
         train_data_vectors, embedded_dim = create_data_vectors(train_data, vector_split_type, name_letter_split,
-                                                               gram_frequencies)
+                                                               gram_frequencies)  # , top_grams_amount)
         train_dataloader = create_siamese_dataset(train_data_vectors, train_batch_size)
-        net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim)
+        net, last_epochs_avg = train_network(train_dataloader, epochs, embedded_dim, dims)
         print("done_train")
         df_train = prepare_data(train_data)
-        # df_train -- anch, pos, label | anch, neg, dist
+        # df_train -- anch, pos, label | anch, neg, label
         train_results, train_size = calculate_distances(train_data_vectors, train_batch_size, net, df_train)
         # df_train -- anch, pos, label, dist | anch, neg, label, dist
-        df_train, train_accuracy, train_precision, train_recall, train_majority_same = calculate_accuracy(df_train,
-                                                                                                          train_results,
-                                                                                                          result_decision_distance)
+        df_train, train_accuracy, train_precision, train_recall, f1, train_majority_same = calculate_accuracy(df_train,
+                                                                                                              train_results,
+                                                                                                              result_decision_distance)
         # df_train -- anch, pos, label, dist, actual, net_pred | anch, neg, label, dist, actual, net_pred
-        train_scores = [train_size, train_accuracy, train_precision, train_recall, train_majority_same,
+        train_scores = [train_size, train_accuracy, train_precision, train_recall, f1, train_majority_same,
                         1 - train_majority_same]
-        df_test = prepare_data(test_data)
+        # test_data: org, pos, neg
+        df_test = prepare_data(test_data)  # df_test: org , candidate, type (label)
         test_data_vectors, embedded_dim = create_data_vectors(test_data, vector_split_type, name_letter_split,
-                                                              gram_frequencies)
+                                                              gram_frequencies)  # , top_grams_amount)
         # save_gram_frequencies_dict(gram_frequencies)
         test_results, test_size = calculate_distances(test_data_vectors, train_batch_size, net, df_test)
         print("done_test")
-        df_test, test_accuracy, test_precision, test_recall, test_majority_same = calculate_accuracy(df_test,
-                                                                                                     test_results,
-                                                                                                     result_decision_distance)
-        test_scores = [test_size, test_accuracy, test_precision, test_recall, test_majority_same,
+        df_test, test_accuracy, test_precision, test_recall, f1, test_majority_same = calculate_accuracy(df_test,
+                                                                                                         test_results,
+                                                                                                         result_decision_distance)
+        test_scores = [test_size, test_accuracy, test_precision, test_recall, f1, test_majority_same,
                        1 - test_majority_same]
         show_false_data_results(df_test)
         save_model_and_results(df_test, net, config_tuple)
         time_took = time.time() - start_time
         add_config_to_csv(config_tuple, train_scores, test_scores, last_epochs_avg, time_took)
+        calculate_gt_distribution(gt_df, 'gt_Sparse', name_letter_split, train_batch_size,
+                                  'ground_truth_test_distances', result_decision_distance)
+        calculate_gt_distribution(neg_df, 'gt_Sparse', name_letter_split, train_batch_size, 'negative_test_distances',
+                                  result_decision_distance)
+
+
+def calculate_gt_distribution(gt_df, vector_split_type, name_letter_split, train_batch_size, name,
+                              result_decision_distance):
+    # gt_df: original, syn_candidate
+    test_data_vectors, embedded_dim = create_data_vectors(gt_df, vector_split_type, name_letter_split)
+    # with open("model.pkl", 'rb') as f:
+    #     net = pickle.load(f)
+    hidden_dim1, hidden_dim2, output_dim = 512, 128, 10
+    model = siamese_network.SiameseNetwork(embedded_dim, hidden_dim1, hidden_dim2, output_dim)
+    model.load_state_dict(torch.load('model.pkl'))
+    calculate_distances_4distribution(test_data_vectors, train_batch_size, model, gt_df)
+    # gt_df: original, syn_candidate, distance
+    gt_df.to_csv('./' + name + result_decision_distance)
+    # returns distances to write to excel for norm distribution
+
+
+def vector_rep_process(names_df, vector_split_type, name_letter_split, train_batch_size, name,
+                       result_decision_distance):
+    # names_df: name
+    test_data_vectors, embedded_dim = create_data_vectors(names_df, vector_split_type,
+                                                          name_letter_split)  # name,sparse,2
+    # load the model and use it for vector rep for each name in the ds
+    hidden_dim1, hidden_dim2, output_dim = 512, 128, 10
+    model = siamese_network.SiameseNetwork(embedded_dim, hidden_dim1, hidden_dim2, output_dim)
+    model.load_state_dict(torch.load('model.pkl'))
+    calculate_embeddings(test_data_vectors, train_batch_size, model, names_df)
+    # names_df: original, embedding
+    names_df.to_csv('./' + name + result_decision_distance)
+    # returns embeddings to write to excel for dataset creation to use knn
 
 
 def save_gram_frequencies_dict(gram_frequencies):
@@ -165,6 +225,19 @@ def save_gram_frequencies_dict(gram_frequencies):
 
 def filter_rows_by_values(df, col, values):
     return df[~df[col].isin(values)]
+
+
+def save_all(names):
+    for name in names:
+        try:
+            with open("./fasttext_vecs/" + name + ".pkl", 'rb') as f:
+                word_vec = pickle.load(f)
+        except:
+            print("fell")
+            with open('missing_names_old2.csv', 'a') as f_object:
+                writer_object = writer(f_object, delimiter=' ')
+                writer_object.writerow(name)
+                f_object.close()
 
 
 def filter_names(short_file_path, dataset):
@@ -218,7 +291,7 @@ Second method to create the train-data.
 """
 
 
-def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict):
+def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_dict=None, top_grams_amount=0):
     data_vectors = []
     dim = 28 ** 2
 
@@ -231,18 +304,26 @@ def create_data_vectors(data, split_method, name_letter_split, gram_frequencies_
                                   0].to(dev),
                               name_representation.word2sparse(triplet[2], name_letter_split, gram_frequencies_dict)[
                                   0].to(dev)]]
-    # elif split_method == 'name2vec':
-    #     for triplet in data:
-    #         data_vectors += [[name2vec(triplet[0], name_letter_split).to(dev),
-    #                           name2vec(triplet[1], name_letter_split).to(dev),
-    #                           name2vec(triplet[2], name_letter_split).to(dev)]]
-    elif split_method == 'nam2vec_fasttext':
+    elif split_method == 'gt_Sparse':
+        for triplet in data:
+            vec, dim = name_representation.word2sparse(triplet[0], name_letter_split)
+            data_vectors += [[vec.to(dev),
+                              name_representation.word2sparse(triplet[1], name_letter_split)[
+                                  0].to(dev)]]
+    elif split_method == 'nam2vec_fasttext':  # old version
         for triplet in data:
             org = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[0]
             dim = name_representation.nam2vec_fasttext(triplet[0], name_letter_split)[1]
+            if dim > 0:
+                data_vectors += [[org,
+                                  name_representation.nam2vec_fasttext(triplet[1], name_letter_split)[0],
+                                  name_representation.nam2vec_fasttext(triplet[2], name_letter_split)[0]]]
+    elif split_method == 'word2top_grams':
+        for triplet in data:
+            org, dim = name_representation.word2top_grams(triplet[0], name_letter_split, top_grams_amount)
             data_vectors += [[org,
-                              name_representation.nam2vec_fasttext(triplet[1], name_letter_split)[0],
-                              name_representation.nam2vec_fasttext(triplet[2], name_letter_split)[0]]]
+                              name_representation.word2top_grams(triplet[1], name_letter_split, top_grams_amount)[0],
+                              name_representation.word2top_grams(triplet[2], name_letter_split, top_grams_amount)[0]]]
 
     elif split_method == 'word_ngrams':
         for triplet in data:
@@ -287,11 +368,14 @@ def show_plot(iteration, loss):
     plt.show()
 
 
-def train_network(train_dataloader, train_number_epochs, embedded_dim):
+# def train_network(train_dataloader, train_number_epochs, embedded_dim):
+def train_network(train_dataloader, train_number_epochs, embedded_dim, hidden_dims):  # dims_list
     """
     Train the network and calculate loss
     """
-    net = siamese_network.SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
+    # net = siamese_network.SiameseNetwork(embedded_dim).to(dev)  # embedded_dim = 28 ** 2
+    net = siamese_network.SiameseNetwork(embedded_dim, hidden_dims[0], hidden_dims[1], hidden_dims[2]).to(
+        dev)  # embedded_dim = 28 ** 2
     # if you get "expected double" error while trying to train the model, add:
     # net = net.double()
     criterion = nn.TripletMarginLoss(margin=0.5)
@@ -309,7 +393,7 @@ def train_network(train_dataloader, train_number_epochs, embedded_dim):
             negatives = torch.as_tensor(negatives).to(dev)
             anchors, positives = torch.as_tensor(anchors).to(dev), torch.as_tensor(positives).to(dev)
             optimizer.zero_grad()
-            output1, output2, output3 = net(anchors, positives, negatives) # forward
+            output1, output2, output3 = net(anchors, positives, negatives)  # forward
             loss_contrastive = criterion(output1, output2, output3)
             loss_contrastive.backward()
             optimizer.step()
@@ -372,9 +456,9 @@ def calculate_distances(data_vectors, batch_size, net, df):
     data_iter = iter(dataloader)
     dist = []
     for i in range(len(dataloader)):
-        x0, x1, label2 = next(data_iter)
+        x0, x1, label2 = next(data_iter)  # representation of each name as vec
         x0, x1, label2 = torch.as_tensor(x0).to(dev), torch.as_tensor(x1).to(dev), torch.as_tensor(label2).to(dev)
-        output1, output2, output3 = net(x0, x1, label2)
+        output1, output2, output3 = net(x0, x1, label2)  # returns vec output of the net (corresponding size)
 
         # for each trio we calculate:
         # 1. The distance of the positive sample from the original sample
@@ -392,42 +476,104 @@ def calculate_distances(data_vectors, batch_size, net, df):
     return results, len(dist)
 
 
+def calculate_distances_4distribution(data_vectors, batch_size, net, df):
+    siamese_dataset = siamese_network.SiameseNetworkDataset(data_vectors)
+
+    results = []
+    dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=batch_size, shuffle=False)
+    data_iter = iter(dataloader)
+    for i in range(len(dataloader)):
+        x0, x1 = next(data_iter)  # representation of each name as vec
+        x0, x1 = torch.as_tensor(x0).to(dev), torch.as_tensor(x1).to(dev)
+        output1, output2, _ = net(x0, x1, x1)  # returns vec output of the net (corresponding size)
+
+        # for each trio we calculate:
+        # 1. The distance of the positive sample from the original sample
+        # 2. The distance of the negative sample from the original sample
+        for j in range(len(output1)):
+            euclidean_distance = F.pairwise_distance(output1[j], output2[j])
+            results += [euclidean_distance.item()]
+    # dist
+    df['Distance'] = results
+
+
+def calculate_embeddings(data_vectors, batch_size, net, df):
+    siamese_dataset = siamese_network.SiameseNetworkDataset(data_vectors)
+
+    results = []
+    dataloader = DataLoader(siamese_dataset, num_workers=0, batch_size=batch_size, shuffle=False)
+    data_iter = iter(dataloader)
+    for i in range(len(dataloader)):
+        x = next(data_iter)  # representation of each name as vec
+        x = torch.as_tensor(x).to(dev)
+        output1, _, _ = net(x, x, x)  # returns vec output of the net (corresponding size)
+        results += [output1]
+    # vector embedding
+    df['Representation'] = results
+
+
 def calculate_accuracy(df, results, result_decision_distance):
     # We use the distances to predict whether two names sound the same (experiment with the distance.. maybe mean)
     actual = []  # the real type of the pair
     net_result = []  # the result from the network
+    dists = []
+    labels = []
     for r in results:
+        dists += [r[0]]
         if r[0] <= result_decision_distance:
             actual += ['same']
             net_result += ['same']
+            labels += ['Correct']
         else:
             actual += ['same']
             net_result += ['different']
+            labels += ['Incorrect']
+        dists += [r[1]]
         if r[1] <= result_decision_distance:
             net_result += ['same']
             actual += ['different']
+            labels += ['Incorrect']
         else:
             net_result += ['different']
             actual += ['different']
+            labels += ['Correct']
+
     df['Actual'] = actual
     df['Network_Prediction_Result'] = net_result
     accuracy = accuracy_score(actual, net_result)
     print("Accuracy ", accuracy)
     ##PRECISION
-    macro = precision_score(net_result, actual, average='macro')
-    micro = precision_score(net_result, actual, average='micro')
-    weighted = precision_score(net_result, actual, average='weighted')
+    macro = precision_score(actual, net_result, average='macro')
+    micro = precision_score(actual, net_result, average='micro')
+    weighted = precision_score(actual, net_result, average='weighted')
     print("Precision: macro = " + str(macro), "micro = " + str(micro), "weighted = " + str(weighted))
     precision = weighted
     ##RECALL
-    macro = recall_score(net_result, actual, average='macro')
-    micro = recall_score(net_result, actual, average='micro')
-    weighted = recall_score(net_result, actual, average='weighted')
+    macro = recall_score(actual, net_result, average='macro')
+    micro = recall_score(actual, net_result, average='micro')
+    weighted = recall_score(actual, net_result, average='weighted')
     print("Recall: macro = " + str(macro), "micro = " + str(micro), "weighted = " + str(weighted))
+    ##f1 - score
+    f1_macro = f1_score(actual, net_result, average='macro')
+    f1_micro = f1_score(actual, net_result, average='micro')
+    f1_weighted = f1_score(actual, net_result, average='weighted')
     recall = weighted
+    # distribution of labels per distance
+    # array of vals (true/false) -> distribution plots per dist
+    # save_distribution(dists, labels, distances)
     # check the accuracy - what is the majority and if they are always chosen
     majority_same = df['Actual'].value_counts()['same'] / df['Actual'].size
-    return df, accuracy, precision, recall, majority_same
+    return df, accuracy, precision, recall, f1_weighted, majority_same
+
+
+def save_distribution(dists, labels, distances):
+    with open('./distribution' + str(distances) + '.csv', 'a') as f_object:
+        writer_object = writer(f_object)
+        writer_object.writerow(dists)
+        writer_object.writerow(labels)
+        # Close the file object
+        f_object.close()
+    distances += 1
 
 
 def show_false_data_results(df_test):
@@ -453,8 +599,10 @@ def save_model_and_results(df_test, net, config_tuple):  # net? to save
     # Saving the results to csv allows us to look on all the samples
     df_test.to_csv('./TestDataResults/Test_Data_and_Results_' + str(config_tuple) + '.csv')
     # Saving the model
-    # PATH = 'model.pkl'
-    # torch.save(net.state_dict(), PATH)
+    PATH = 'model.pkl'
+    # model_scripted = torch.jit.script(net)  # Export to TorchScript
+    # model_scripted.save('model_scripted.pt')
+    torch.save(net.state_dict(), PATH)  # object that maps each layer to its parameter tensor
 
 
 # append the tuples to the csv file

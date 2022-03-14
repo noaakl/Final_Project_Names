@@ -2,12 +2,24 @@ import pandas as pd
 from tqdm import tqdm
 import random
 import csv
-import siamese_network_bgrams_updated
 
 '''
 Phase to add Negative Examples from competitors
 '''
 
+def negative(originals, index):
+    neg = "None"
+    # Each name might be in the dataset 10 times in a row (at most)
+    # add a random name from 'originals' as negative example
+    if index <= 9:
+        neg = originals[random.randint(10, len(originals) - 1)]
+    elif index >= len(originals) - 10:
+        neg = originals[random.randint(0, len(originals) - 10)]
+    else: # between the indices (10 -> len - 10) choose random from 0 to 10 under and from 10 above to end
+        above = originals[random.randint(0, index - 10)]
+        below = originals[random.randint(index + 10, len(originals) - 1)]
+        neg = random.choice([above, below]) # choose between them
+    return neg
 
 def first_phase_negative_examples(long_file_path, competitor_dataset):
     """
@@ -95,11 +107,11 @@ def helper2():
     negatives = []
     # Creating random negatives
     for i in tqdm(range(len(originals))):
-        negatives += [siamese_network_bgrams_updated.negative(originals, i)]
+        negatives += [negative(originals, i)]
 
     # Updating the ground truth
     ground_truth_df['Negative'] = negatives
-    # ground_truth_df
+    # save ground_truth_df
     ground_truth_df.to_csv('spokenName2Vec_ground_truth.csv', index=False)
     # df = ground_truth_df[ground_truth_df["Start"] == "A"]
 
@@ -113,6 +125,7 @@ def helper():
         data = list(reader)
     triplets = []
     for row in tqdm(data):
+        # Original , Candidate , Negative (random ..)
         triplets = triplets + [[row[2], row[3], row[8]]]
     triplets = triplets[1:]
     random.shuffle(triplets)
