@@ -25,16 +25,18 @@ class SiameseNetwork(nn.Module):
     def __init__(self, embed_dim, hidden_dim1, hidden_dim2, output_dim):
         super(SiameseNetwork, self).__init__()
         self._lw1 = torch.nn.parameter.Parameter(torch.randn(embed_dim, hidden_dim1))  # embed_dim -> 784,512
-        self._l1 = nn.Linear(embed_dim, hidden_dim1) # old: (embed_dim, 512)
+        self._l1 = nn.Linear(embed_dim, hidden_dim1) # (embed_dim, 512)
         self._relu = nn.ReLU(inplace=True)
-        self._l2 = nn.Linear(hidden_dim1, hidden_dim2) # old: (512, 128)
-        self._l3 = nn.Linear(hidden_dim2, output_dim) # old: (128, 10)
+        self._l2 = nn.Linear(hidden_dim1, hidden_dim2) # (512, 128)
+        self._l3 = nn.Linear(hidden_dim2, output_dim) # (128, 10)
 
     def forward_once(self, x):
         # if you use dense vectors use the row below instead of x.bmm and lw1
         # x = self._l1(x)
+        # sparse vectors
         b = x.shape[0]
         x = x.bmm(self._lw1.repeat(b, 1, 1))
+
         x = self._relu(x)
         x = self._l2(x)
         x = self._relu(x)
@@ -42,7 +44,7 @@ class SiameseNetwork(nn.Module):
         return x
 
     def forward(self, input1, input2, input3):
-        # expects tensor of type Float
+        # expects tensor of type Float (used for top grams experiment)
         # input1 = input1.type(torch.FloatTensor)
         # input2 = input2.type(torch.FloatTensor)
         # input3 = input3.type(torch.FloatTensor)

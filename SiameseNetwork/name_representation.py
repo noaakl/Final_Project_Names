@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import itertools
 import random
-# import fasttext
+import fasttext
 import pickle
 import pandas as pd
 from _csv import writer
@@ -25,21 +25,9 @@ We have two ways to represent the vectors:
 """
 
 
-def calculate_gram_frequency(dict, name_split):
-    """
-    The function is used to build the gram dictionary for calculating frequency
-    """
-    for gram in name_split:
-        if gram in dict:
-            dict[gram] += 1
-        else:
-            dict[gram] = 1
-
-
-# Convert names to sparse
 def word2sparse(name, name_letter_split, gram_frequencies_dict={}):
     '''
-    The function creates a vector as type of bag of words where in each coordinate a 1 is place representing
+    The function creates a vector as type of bag of words where in each coordinate a 1 is placed representing
     its existence of the value
     torch.sparse_coo_tensor receives the matrix of indices (transposed), the values to place (ones)
     and the vector size
@@ -62,8 +50,10 @@ def word2sparse(name, name_letter_split, gram_frequencies_dict={}):
     return s, 28 ** name_letter_split  # 28 ** 2
 
 
-# Convert names to dense
 def word2dense(name, name_letter_split):
+    """
+    The function is used to represent a name as a vector of a bag of words (size of alphabet squared - 2 grams)
+    """
     name = name.lower()
     name = [26] + [ord(c) - ord('a') for c in name] + [27]
     name = [name[i:i + name_letter_split] for i in range(len(name) - 1)]
@@ -72,6 +62,18 @@ def word2dense(name, name_letter_split):
     for idx in nameidx:
         dense[idx] = 1
     return dense, 28 ** 2
+
+
+############## Grams Representation ################
+def calculate_gram_frequency(dict, name_split):
+    """
+    The function is used to build the gram dictionary for calculating frequency in order to minimize the vector
+    """
+    for gram in name_split:
+        if gram in dict:
+            dict[gram] += 1
+        else:
+            dict[gram] = 1
 
 
 def create_grams_dict(number_of_grams):
@@ -105,12 +107,15 @@ def word_ngrams(name, number_of_grams):
     return s, vector_size
 
 
-# convert names to vec representation by using char2vec
-# def name2vec(name,name_letter_split):
-#   name = name.lower()
-#   c2v_model = chars2vec.load_model('eng_50')
-#   word_embeddings = c2v_model.vectorize_words([name])
-#   return word_embeddings.__getitem__(0)
+def name2vec(name):
+    """
+    The function uses the char2vec method to represent the given input name as vector
+    """
+    name = name.lower()
+    c2v_model = chars2vec.load_model('eng_50')
+    word_embeddings = c2v_model.vectorize_words([name])
+    return word_embeddings.__getitem__(0)
+
 
 def name2vec_addition(name, name_letter_split):
     """
@@ -118,7 +123,7 @@ def name2vec_addition(name, name_letter_split):
     """
     name = name.lower()
     name = [26] + [ord(c) - ord('a') for c in name] + [27]
-    name = [name[i:i + 2] for i in range(len(name) - 1)]
+    name = [name[i:i + name_letter_split] for i in range(len(name) - 1)]
     sum_pair = [0, 0]
     for pair in name:
         sum_pair[0] += pair[0]
@@ -126,27 +131,28 @@ def name2vec_addition(name, name_letter_split):
     return sum_pair
 
 
-# def nam2vec_fasttext(name, name_letter_split = 2):
-#     """
-#     The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
-#     representing the given word
-#     """
-#     model = fasttext.load_model("name2vec_model.bin")
-#     word_vec = torch.Tensor(model.get_word_vector(name))
-#     return word_vec, len(word_vec)
-
-def nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
+############## Fasttext Representation ################
+def nam2vec_fasttext(name):
     """
     The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
     representing the given word
     """
+    model = fasttext.load_model("name2vec_model.bin")
+    word_vec = torch.Tensor(model.get_word_vector(name))
+    return word_vec, len(word_vec)
+
+
+def load_nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
+    """
+    The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
+    representation of the given word
+    """
     try:
-        with open("./missing_fasttext_vecs/" + name + ".pkl", 'rb') as f:
+        with open("./fasttext_vecs/" + name + ".pkl", 'rb') as f:
             word_vec = pickle.load(f)
-        # vec = torch.tensor(word_vec)
         vec = torch.tensor(np.array([word_vec]))
 
-    except: # write the names in the missing names file to save vector representation
+    except:  # write the names in the missing names file to save vector representation
         with open('./missing_names.csv', 'a') as f_object:
             writer_object = writer(f_object, delimiter=' ')
             writer_object.writerow(name)
@@ -156,7 +162,7 @@ def nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
     return vec, len(word_vec)
 
 
-def save_nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
+def save_nam2vec_fasttext(name):  # load the pickle before
     """
     The function uses a trained fasttext model (by the ground truth names corpus) to create a vector
     representing the given word
@@ -165,13 +171,14 @@ def save_nam2vec_fasttext(name, name_letter_split=2):  # load the pickle before
         pickle.dump(name, f)
 
 
+############### Top Grams Experiments #####################3
 def word2top_grams(name, name_letter_split, top_grams_amount):
     '''
     The function creates a vector as type of bag of words where in each coordinate the frequency is placed
     representing the amount of the value in its place
     The representation is for 'top_grams_amount' top grams only (2 grams)
     '''
-    top_grams2_csv = pd.read_csv("./top_grams2.csv").columns
+    top_grams2_csv = pd.read_csv("gram_dictionaries/top_grams2.csv").columns
     name = name.lower()
     top_grams_lst = list(top_grams2_csv[:top_grams_amount])
     name_rep = [0] * top_grams_amount
@@ -184,11 +191,7 @@ def word2top_grams(name, name_letter_split, top_grams_amount):
         if placement != -1:
             name_rep[placement] += 1
 
-    # torch.tensor([[0, rep] for rep in name_rep if rep>0])
-
     name_vec = torch.tensor([name_rep], dtype=torch.int64)
-    # name_vec = torch.sparse_coo_tensor(name_vec.t(), values, (1, top_grams_amount))
-    # name_vec = torch.tensor(np.array([name_rep]))
     return name_vec, top_grams_amount
 
 
@@ -198,12 +201,12 @@ def word2all_top_grams(name, top_grams_amount, grams_path):
     representing the amount of the value in its place
     The representation is for 'top_grams_amount' top grams only (1,2 & 3)
     '''
-    top_grams_csv = pd.read_csv("./"+grams_path+".csv").columns
+    top_grams_csv = pd.read_csv("./" + grams_path + ".csv").columns
     name = name.lower()
     top_grams_lst = list(top_grams_csv[:top_grams_amount])
     name_rep = [0] * top_grams_amount
     name_split = []
-    for j in range(1,4):
+    for j in range(1, 4):
         name_split += [name[i:i + j] for i in range(len(name) - (j - 1))]
     for char in name_split:
         try:
@@ -214,10 +217,3 @@ def word2all_top_grams(name, top_grams_amount, grams_path):
             name_rep[placement] += 1
     name_vec = torch.tensor(np.array([name_rep]))
     return name_vec, top_grams_amount
-
-
-# print(word2sparse('hila',2))
-tens = word2top_grams("Hila",2,170)[0]
-print(tens)
-print(word2sparse('hila',2))
-# print(nam2vec_fasttext("Aemilia"))
