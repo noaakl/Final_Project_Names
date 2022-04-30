@@ -4,8 +4,9 @@ import random
 import csv
 
 '''
-Phase to add Negative Examples from competitors
+Phase 1 to add Negative Examples from competitor algorithms
 '''
+
 
 def negative(originals, index):
     neg = "None"
@@ -15,11 +16,12 @@ def negative(originals, index):
         neg = originals[random.randint(10, len(originals) - 1)]
     elif index >= len(originals) - 10:
         neg = originals[random.randint(0, len(originals) - 10)]
-    else: # between the indices (10 -> len - 10) choose random from 0 to 10 under and from 10 above to end
+    else:  # between the indices (10 -> len - 10) choose random from 0 to 10 under and from 10 above to end
         above = originals[random.randint(0, index - 10)]
         below = originals[random.randint(index + 10, len(originals) - 1)]
-        neg = random.choice([above, below]) # choose between them
+        neg = random.choice([above, below])  # choose between them
     return neg
+
 
 def first_phase_negative_examples(long_file_path, competitor_dataset):
     """
@@ -50,9 +52,8 @@ def first_phase_negative_examples(long_file_path, competitor_dataset):
         metaphone_v2_df['Method'] = 'Metaphone'
         nysiis_v2_df['Method'] = 'Nysiis'
         soundex_v2_df['Method'] = 'Soundex'
-    else:  # use the new competitor dataset
+    else:  # use the new built competitor dataset
         # Suggestion of the competitors
-        # path = "/content/drive/MyDrive/Siamese_Datasets/Competitor_Results/"
         path = './Siamese_Datasets/Competitor_Results/'
         dm_df = pd.read_csv(path + 'Double_Metaphone/Double_Metaphone_names.csv')
         mrc_df = pd.read_csv(path + 'Matching_Rating_Codex/Matching_Rating_Codex_names.csv')
@@ -80,9 +81,6 @@ def first_phase_negative_examples(long_file_path, competitor_dataset):
     return methods_df
 
 
-"""We take the mistakes of the competitors and use the as negative samples"""
-
-
 def create_train_df(methods_df, filtered_df):
     """
     The method merges the positive and negative dfs and creates the train df with the candidates
@@ -94,10 +92,7 @@ def create_train_df(methods_df, filtered_df):
     return train_df
 
 
-# TODO: CHECK IF NEEDED
-def helper2():
-    # ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
-
+def helper_func():
     # Samples From ground truth we created from turicreate dataset
     ground_truth_df = pd.read_csv("./spokenName2Vec_ground_truth.csv")
     # For each name we mark the letter it starts with
@@ -113,19 +108,19 @@ def helper2():
     ground_truth_df['Negative'] = negatives
     # save ground_truth_df
     ground_truth_df.to_csv('spokenName2Vec_ground_truth.csv', index=False)
-    # df = ground_truth_df[ground_truth_df["Start"] == "A"]
 
 
-# TODO: CHECK IF NEEDED
-def helper():
-    helper2()
-    #ADDING MIXED NEGATIVE EXAMPLES.. (not complicated negatives)
+def add_mixed_negatives():
+    """
+    The function adds mixed negative examples to increase the dataset size
+    """
+    helper_func()
     with open('./spokenName2Vec_ground_truth.csv', newline='') as f:
         reader = csv.reader(f)
         data = list(reader)
     triplets = []
     for row in tqdm(data):
-        # Original , Candidate , Negative (random ..)
+        # Original , Candidate , random Negative
         triplets = triplets + [[row[2], row[3], row[8]]]
     triplets = triplets[1:]
     random.shuffle(triplets)
@@ -133,11 +128,12 @@ def helper():
 
 
 def train_test_split(train_df):
-    # Split to train data and test data
-    ### ADD EXTRA RANDOM NEGATIVES (adding the triplets..)
-    triplets = helper()
-    originals = train_df['Original']
-    pos = list(train_df['Positive'])
+    """
+    The function splits the train and test data and adds random negative examples using
+    the add_mixed_negatives function to increase the dataset size
+    """
+    # adding triplets of data as negative examples
+    triplets = add_mixed_negatives()
     for row in tqdm(train_df.itertuples()):
         triplets = triplets + [[row[1], row[2], row[3]]]
     triplets = triplets[1:]
@@ -145,22 +141,15 @@ def train_test_split(train_df):
     l = int(0.66 * len(triplets))
     train_data = triplets[:l]
     test_data = triplets[l:]
-    # test_data
-    ### WITHOUT THE EXTRA RANDOM NEGATIVES USE THIS BELOW
-    # l = int(0.66 * len(train_df))
-    # train_data = train_df[:l]
-    # test_data = train_df[l:]
-    # test_data
     return train_data, test_data
 
 
-# TODO: CHECK IF NEEDED
 def add_random_negatives(train_df, train_data):
-    ## (used to add more random negatives) -> random negative for every unique positive
-    # Samples from competitors
     """
     The method adds random 'easy' negative examples to the train data
     """
+    # used to add more random negatives -> random negative for every unique positive
+    # Samples from competitors
     train_array = train_df['Positive'].unique()
     competitors = []
     for pos in tqdm(train_array):
