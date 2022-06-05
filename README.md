@@ -23,8 +23,8 @@ Our nAime project contains:
 
 &copy; Algorithms by: Dr. Aviad Elyashar, Dr. Rami Puzis, Dr. Michael Fire
 
-- [SpokenName2Vec](https://scholar.google.co.il/citations?view_op=view_citation&hl=en&user=CPE9YOkAAAAJ&citation_for_view=CPE9YOkAAAAJ:3fE2CSJIrl8C)
-- [Graft](https://scholar.google.co.il/citations?view_op=view_citation&hl=en&user=CPE9YOkAAAAJ&citation_for_view=CPE9YOkAAAAJ:kNdYIx-mwKoC)
+- [SpokenName2Vec](https://doi.org/10.1016/j.knosys.2021.107229)
+- [Graft](https://doi.org/10.1109/TKDE.2021.3096670)
 
 ##
 
