@@ -19,12 +19,39 @@ Our nAime project contains:
 
 ##
 
-### Articles
+### Citation
+
 
 &copy; Algorithms by: Dr. Aviad Elyashar, Dr. Rami Puzis, Dr. Michael Fire
 
-- [SpokenName2Vec](https://doi.org/10.1016/j.knosys.2021.107229)
-- [Graft](https://doi.org/10.1109/TKDE.2021.3096670)
+
+- To cite [SpokenName2Vec](https://doi.org/10.1109/TKDE.2021.3096670) paper, please use the following bibtex reference:
+
+```
+@article{elyashar2021does,
+  title={How does that name sound? Name representation learning using accent-specific speech generation},
+  author={Elyashar, Aviad and Puzis, Rami and Fire, Michael},
+  journal={Knowledge-Based Systems},
+  volume={227},
+  pages={107229},
+  year={2021},
+  publisher={Elsevier}
+}
+```
+
+- To cite [GRAFT](https://doi.org/10.1016/j.knosys.2021.107229) paper, please use the following bibtex reference:
+
+```
+article{elyashar2021runs,
+  title={It Runs in the Family: Unsupervised Algorithm for Alternative Name Suggestion Using Digitized Family Trees},
+  author={Elyashar, Aviad and Puzis, Rami and Fire, Michael},
+  journal={IEEE Transactions on Knowledge \& Data Engineering},
+  number={01},
+  pages={1--1},
+  year={2021},
+  publisher={IEEE Computer Society}
+}
+```
 
 ##
 
