@@ -10,7 +10,7 @@ Our nAime project contains:
 ##
 
 ### Run the Package:
-- use python 3.6 on linox
+- use python 3.6 on linux
 - install fsmpeg on your computer
 - upgrade pip
 - run `pip install nAIme`
