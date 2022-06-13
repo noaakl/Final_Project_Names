@@ -3,19 +3,27 @@
 Our nAime project contains:
 - SpokenName2Vec algorithm
 - GRAFT algorithm
-- Python open source package: for more information [Click Here](https://pypi.org/project/nAIme/)
+- Python open source package [Click Here](https://pypi.org/project/nAIme/)
 - Flask and React website: for more information [Click Here](https://github.com/noaakl/naime-app)
 - Reaserch Infrastructure for Siamese Neural Network using SpokenName2Vec algorithm [Click Here](https://github.com/noaakl/Final_Project_Names/tree/main/SiameseNetwork)
 
 ##
 
-### Run the Package:
+### Run Package:
 - use python 3.6 on linux
 - install fsmpeg on your computer
 - upgrade pip
 - run `pip install nAIme`
 - import `name.get_suggestion`
 - now you can use any of the package's functions. for example: `nAIme.get_suggestion.spokenname2vec('Anny')`
+
+##
+
+### Update Package:
+- run `cd nAIme
+python setup.py sdist
+pip install twine
+twine upload dist/*`
 
 ##
 
