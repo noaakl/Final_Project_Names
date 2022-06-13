@@ -20,13 +20,11 @@ Our nAime project contains:
 ##
 
 ### Update Package:
-- run `cd nAIme
-- 
-python setup.py sdist
-
-pip install twine
-
-twine upload dist/*`
+run:
+- `cd nAIme`
+- `python setup.py sdist`
+- `pip install twine`
+- `twine upload dist/*`
 
 ##
 
