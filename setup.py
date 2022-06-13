@@ -32,6 +32,17 @@ setup(
                       ],
     version='0.0.1',
     description='name suggestion python package',
-    author='Me',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/noaakl/Final_Project_Names",
+    author="Students: Noaa Kless, Tal Meridor, Guy Shimony. Academic Instructors: Dr. Aviad Elyashar, Dr. Michael Fire, Dr. Rami Puzis",
+    author_email="nAIme.project@gmail.com",
     license='MIT',
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: Linux",
+    ],
+
+    python_requires=">=3.6",
 )
