@@ -8,9 +8,9 @@
 - Reaserch Infrastructure for Siamese Neural Network using SpokenName2Vec algorithm [Click Here](https://github.com/noaakl/Final_Project_Names/tree/main/SiameseNetwork)
 
 
-## Python Package:
+### Python Package:
 
-### Run Package:
+#### Run Package:
 
 - use python 3.6 on linux
 - install fsmpeg on your computer
@@ -19,7 +19,7 @@
 - import `name.get_suggestion`
 - now you can use any of the package's functions. for example: `nAIme.get_suggestion.spokenname2vec('Anny')`
 
-### Update Package:
+#### Update Package:
 
 run:
 - `cd nAIme`
@@ -27,23 +27,23 @@ run:
 - `pip install twine`
 - `twine upload dist/*`
 
+##
 
-
-## Website:
+### Website:
 
 Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 
+##
 
-
-## Siamese Neural Network Classifiere:
+### Siamese Neural Network Classifiere:
 
 - Execute the siamese_network_bgrams_updated.py file to build and train the network
 - The main activation function will run the process and test it
 - Change the different parameters to experiment with the network results and scores
 
+##
 
-
-## Citation
+### Citation
 
 
 &copy; Algorithms by: Dr. Aviad Elyashar, Dr. Rami Puzis, Dr. Michael Fire
@@ -77,9 +77,9 @@ article{elyashar2021runs,
 }
 ```
 
+##
 
-
-## Authors
+### Authors
 
 - [Noaa Kless](https://github.com/noaakl)
 - [Tal Meridor](https://github.com/talmeri)
