@@ -38,7 +38,7 @@ Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 
 ### Siamese Neural Network Classifiere:
 
-- Execute the siamese_network_bgrams_updated.py file to build and train the network
+- Execute the `siamese_network_bgrams_updated.py` file to build and train the network
 - The main activation function will run the process and test it
 - Change the different parameters to experiment with the network results and scores
 
