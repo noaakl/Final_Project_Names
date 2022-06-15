@@ -1,4 +1,4 @@
-# Final_Project_Names
+# nAIme - Name Search Final Project
 
 Our nAime project contains:
 - SpokenName2Vec algorithm
@@ -10,6 +10,7 @@ Our nAime project contains:
 ##
 
 ### Run Package:
+
 - use python 3.6 on linux
 - install fsmpeg on your computer
 - upgrade pip
@@ -20,11 +21,20 @@ Our nAime project contains:
 ##
 
 ### Update Package:
+
 run:
 - `cd nAIme`
 - `python setup.py sdist`
 - `pip install twine`
 - `twine upload dist/*`
+
+##
+
+### Siamese Neural Network Classifiere:
+
+- Execute the siamese_network_bgrams_updated.py file to build and train the network
+- The main activation function will run the process and test it
+- Change the different parameters to experiment with the network results and scores
 
 ##
 
