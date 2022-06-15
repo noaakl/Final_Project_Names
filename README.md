@@ -7,7 +7,6 @@
 - Flask and React website: for more information [Click Here](https://github.com/noaakl/naime-app)
 - Reaserch Infrastructure for Siamese Neural Network using SpokenName2Vec algorithm [Click Here](https://github.com/noaakl/Final_Project_Names/tree/main/SiameseNetwork)
 
-##
 
 ## Python Package:
 
@@ -28,13 +27,13 @@ run:
 - `pip install twine`
 - `twine upload dist/*`
 
-##
 
-### Website:
+
+## Website:
 
 Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 
-##
+
 
 ## Siamese Neural Network Classifiere:
 
@@ -42,7 +41,7 @@ Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 - The main activation function will run the process and test it
 - Change the different parameters to experiment with the network results and scores
 
-##
+
 
 ## Citation
 
@@ -78,7 +77,7 @@ article{elyashar2021runs,
 }
 ```
 
-##
+
 
 ## Authors
 
