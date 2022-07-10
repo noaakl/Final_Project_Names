@@ -1,4 +1,4 @@
-![logo](https://github.com/noaakl/naime-app/blob/nAIme-Similar-Name_suggestion-System.png)
+![logo](https://github.com/noaakl/nAIme/blob/main/nAIme-Similar-Name_suggestion-System.png)
 
 # nAIme - Name Search Final Project
 
