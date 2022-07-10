@@ -1,3 +1,5 @@
+![logo](https://github.com/noaakl/naime-app/blob/main/nAIme-Similar-Name_suggestion-System.png)
+
 # nAIme - Name Search Final Project
 
 ### Our nAime project contains:
