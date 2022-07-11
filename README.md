@@ -2,6 +2,12 @@
 
 # nAIme - Name Search Final Project
 
+### Website:
+
+Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
+
+##
+
 ### Our nAime project contains:
 - SpokenName2Vec algorithm
 - GRAFT algorithm
@@ -31,12 +37,6 @@ run:
 - `python setup.py sdist`
 - `pip install twine`
 - `twine upload dist/*`
-
-##
-
-### Website:
-
-Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 
 ##
 
