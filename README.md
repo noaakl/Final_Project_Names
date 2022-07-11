@@ -4,7 +4,7 @@
 
 ### Website:
 
-Website available on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
+Visit our website on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 
 ##
 
