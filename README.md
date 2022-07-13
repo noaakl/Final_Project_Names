@@ -2,9 +2,9 @@
 
 # nAIme - Name Search Final Project
 
-### Website:
-
 Visit our website on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
+Use our package like in [Here](https://colab.research.google.com/drive/17bFRNh2JDxTcAATzuWhXSW4eQHzf62gp?usp=sharing)
+
 
 ##
 
@@ -28,7 +28,7 @@ Visit our website on [nAIme.cs.bgu.ac.il](https://naime.cs.bgu.ac.il/)
 - import `nAIme.get_suggestion`
 - now you can use any of the package's functions. for example: `nAIme.get_suggestion.spokenname2vec('Anny')`
 
-For more usage examples [Click Here](https://colab.research.google.com/drive/17bFRNh2JDxTcAATzuWhXSW4eQHzf62gp?usp=sharing)
+For more usage examples [Click Here](https://github.com/noaakl/nAIme/blob/main/nAIme/Examples/package_examples.ipynb)
 
 #### Update Package:
 
